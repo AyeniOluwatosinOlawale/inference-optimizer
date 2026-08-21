@@ -5,6 +5,10 @@ import {
   text,
   timestamp,
   integer,
+  boolean,
+  numeric,
+  json,
+  unique,
 } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
 
@@ -68,10 +72,59 @@ export const invitations = pgTable('invitations', {
   status: varchar('status', { length: 20 }).notNull().default('pending'),
 });
 
+export const providerKeys = pgTable(
+  'provider_keys',
+  {
+    id: serial('id').primaryKey(),
+    teamId: integer('team_id').notNull().references(() => teams.id),
+    provider: varchar('provider', { length: 50 }).notNull(),
+    keyHint: varchar('key_hint', { length: 20 }).notNull(),
+    keyEnc: text('key_enc').notNull(),
+    baseUrl: text('base_url'),
+    name: varchar('name', { length: 100 }),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+  },
+  (t) => [unique().on(t.teamId, t.provider)]
+);
+
+export const gatewayRequests = pgTable('gateway_requests', {
+  id: serial('id').primaryKey(),
+  teamId: integer('team_id').references(() => teams.id),
+  provider: varchar('provider', { length: 50 }).notNull().default('anthropic'),
+  modelRequested: varchar('model_requested', { length: 100 }).notNull(),
+  modelUsed: varchar('model_used', { length: 100 }).notNull(),
+  modelBaseline: varchar('model_baseline', { length: 100 }).notNull(),
+  inputTokens: integer('input_tokens').notNull().default(0),
+  outputTokens: integer('output_tokens').notNull().default(0),
+  cacheReadTokens: integer('cache_read_tokens').notNull().default(0),
+  costUsd: numeric('cost_usd', { precision: 12, scale: 6 }).notNull().default('0'),
+  baselineCostUsd: numeric('baseline_cost_usd', { precision: 12, scale: 6 }).notNull().default('0'),
+  savingsUsd: numeric('savings_usd', { precision: 12, scale: 6 }).notNull().default('0'),
+  ttftMs: integer('ttft_ms'),
+  totalMs: integer('total_ms'),
+  fromCache: boolean('from_cache').notNull().default(false),
+  usedFallback: boolean('used_fallback').notNull().default(false),
+  optimizations: json('optimizations').$type<string[]>().notNull().default([]),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+});
+
+export const gatewayApiKeys = pgTable('gateway_api_keys', {
+  id: serial('id').primaryKey(),
+  teamId: integer('team_id').notNull().references(() => teams.id),
+  keyHash: varchar('key_hash', { length: 64 }).notNull().unique(),
+  keyPrefix: varchar('key_prefix', { length: 10 }).notNull(),
+  name: varchar('name', { length: 100 }),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  revokedAt: timestamp('revoked_at'),
+});
+
 export const teamsRelations = relations(teams, ({ many }) => ({
   teamMembers: many(teamMembers),
   activityLogs: many(activityLogs),
   invitations: many(invitations),
+  providerKeys: many(providerKeys),
+  gatewayRequests: many(gatewayRequests),
+  gatewayApiKeys: many(gatewayApiKeys),
 }));
 
 export const usersRelations = relations(users, ({ many }) => ({
@@ -112,6 +165,18 @@ export const activityLogsRelations = relations(activityLogs, ({ one }) => ({
   }),
 }));
 
+export const providerKeysRelations = relations(providerKeys, ({ one }) => ({
+  team: one(teams, { fields: [providerKeys.teamId], references: [teams.id] }),
+}));
+
+export const gatewayRequestsRelations = relations(gatewayRequests, ({ one }) => ({
+  team: one(teams, { fields: [gatewayRequests.teamId], references: [teams.id] }),
+}));
+
+export const gatewayApiKeysRelations = relations(gatewayApiKeys, ({ one }) => ({
+  team: one(teams, { fields: [gatewayApiKeys.teamId], references: [teams.id] }),
+}));
+
 export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
 export type Team = typeof teams.$inferSelect;
@@ -127,6 +192,13 @@ export type TeamDataWithMembers = Team & {
     user: Pick<User, 'id' | 'name' | 'email'>;
   })[];
 };
+
+export type ProviderKey = typeof providerKeys.$inferSelect;
+export type NewProviderKey = typeof providerKeys.$inferInsert;
+export type GatewayRequest = typeof gatewayRequests.$inferSelect;
+export type NewGatewayRequest = typeof gatewayRequests.$inferInsert;
+export type GatewayApiKey = typeof gatewayApiKeys.$inferSelect;
+export type NewGatewayApiKey = typeof gatewayApiKeys.$inferInsert;
 
 export enum ActivityType {
   SIGN_UP = 'SIGN_UP',

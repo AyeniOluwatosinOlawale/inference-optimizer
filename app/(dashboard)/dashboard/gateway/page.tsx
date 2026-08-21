@@ -1,0 +1,476 @@
+'use client';
+
+import { useState } from 'react';
+import useSWR from 'swr';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Key, TrendingUp, Zap, Activity, Plus, X, Trash2 } from 'lucide-react';
+
+const fetcher = (url: string) => fetch(url).then(r => r.json());
+
+const fmt$ = (n: number) =>
+  n >= 1 ? `$${n.toFixed(2)}` : n >= 0.01 ? `$${(n * 100).toFixed(1)}¢` : `$${(n * 1_000_000).toFixed(0)}µ`;
+
+const fmtPct = (n: number) => `${n.toFixed(1)}%`;
+
+const PROVIDERS: Record<string, { label: string; icon: string }> = {
+  anthropic:       { label: 'Anthropic', icon: '🟤' },
+  openai:          { label: 'OpenAI', icon: '🟢' },
+  gemini:          { label: 'Google Gemini', icon: '🔵' },
+  groq:            { label: 'Groq', icon: '🟣' },
+  'openai-compat': { label: 'OpenAI-compat', icon: '⚙️' },
+};
+
+const MODEL_SHORT: Record<string, string> = {
+  'claude-haiku-4-5': 'Haiku',
+  'claude-sonnet-4-6': 'Sonnet',
+  'claude-opus-4-7': 'Opus',
+  'gpt-4o': 'GPT-4o',
+  'gpt-4o-mini': 'GPT-4o-mini',
+  'gemini-2.0-flash': 'Flash',
+  'gemini-2.5-pro': 'Gemini Pro',
+  'llama-3.3-70b-versatile': 'Llama 70B',
+  'llama-3.1-8b-instant': 'Llama 8B',
+};
+
+function KpiCard({ label, value, sub, icon: Icon, color, delay = 0 }: {
+  label: string; value: string; sub: string; icon: React.ElementType; color: string; delay?: number;
+}) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay, duration: 0.4 }}
+      className="bg-white border border-gray-100 rounded-2xl p-5 shadow-sm flex items-start gap-4"
+    >
+      <div className={`w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 ${color}`}>
+        <Icon className="w-5 h-5" />
+      </div>
+      <div className="min-w-0">
+        <p className="text-xs text-gray-400 font-medium uppercase tracking-wide">{label}</p>
+        <p className="text-2xl font-bold text-gray-900 mt-0.5">{value}</p>
+        <p className="text-xs text-gray-500 mt-0.5">{sub}</p>
+      </div>
+    </motion.div>
+  );
+}
+
+function OptPill({ label }: { label: string }) {
+  const colors: Record<string, string> = {
+    routing: 'bg-green-50 text-green-700',
+    prompt_caching: 'bg-blue-50 text-blue-700',
+    coalescing: 'bg-amber-50 text-amber-700',
+    fallback: 'bg-purple-50 text-purple-700',
+    early_stopping: 'bg-rose-50 text-rose-700',
+  };
+  return (
+    <span className={`inline-block text-xs px-1.5 py-0.5 rounded font-medium ${colors[label] ?? 'bg-gray-100 text-gray-600'}`}>
+      {label.replace('_', ' ')}
+    </span>
+  );
+}
+
+function ProviderKeysPanel() {
+  const { data: keys = [], mutate, isLoading } = useSWR<any[]>('/api/provider-keys', fetcher);
+  const [showForm, setShowForm] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [revoking, setRevoking] = useState<number | null>(null);
+  const [error, setError] = useState('');
+  const [form, setForm] = useState({ provider: 'anthropic', api_key: '', base_url: '', name: '' });
+
+  const handleAdd = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    setSubmitting(true);
+    try {
+      const res = await fetch('/api/provider-keys', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          provider: form.provider,
+          api_key: form.api_key,
+          base_url: form.base_url || undefined,
+          name: form.name || undefined,
+        }),
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || 'Failed to save key');
+      }
+      setForm({ provider: 'anthropic', api_key: '', base_url: '', name: '' });
+      setShowForm(false);
+      mutate();
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleRevoke = async (id: number) => {
+    setRevoking(id);
+    try {
+      await fetch(`/api/provider-keys/${id}`, { method: 'DELETE' });
+      mutate();
+    } finally {
+      setRevoking(null);
+    }
+  };
+
+  return (
+    <div className="bg-white border border-gray-100 rounded-2xl shadow-sm overflow-hidden">
+      <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between gap-3">
+        <div>
+          <h2 className="text-base font-semibold text-gray-900">Provider Keys</h2>
+          <p className="text-xs text-gray-400 mt-0.5">Your API keys — encrypted at rest, used by the gateway on your behalf</p>
+        </div>
+        <button
+          onClick={() => { setShowForm(v => !v); setError(''); }}
+          className="flex items-center gap-1.5 text-xs font-medium bg-gray-900 text-white px-3 py-1.5 rounded-lg hover:bg-gray-700 transition-colors"
+        >
+          {showForm ? <X className="w-3.5 h-3.5" /> : <Plus className="w-3.5 h-3.5" />}
+          {showForm ? 'Cancel' : 'Add key'}
+        </button>
+      </div>
+
+      <AnimatePresence>
+      {showForm && (
+        <motion.form
+          key="add-key-form"
+          initial={{ opacity: 0, height: 0 }}
+          animate={{ opacity: 1, height: 'auto' }}
+          exit={{ opacity: 0, height: 0 }}
+          transition={{ duration: 0.25 }}
+          onSubmit={handleAdd}
+          className="px-6 py-5 border-b border-gray-50 bg-gray-50/50 space-y-4 overflow-hidden"
+        >
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-medium text-gray-600 mb-1">Provider</label>
+              <select
+                value={form.provider}
+                onChange={e => setForm(f => ({ ...f, provider: e.target.value }))}
+                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900/10 bg-white"
+              >
+                {Object.entries(PROVIDERS).map(([v, { label }]) => (
+                  <option key={v} value={v}>{label}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-600 mb-1">Label (optional)</label>
+              <input
+                type="text"
+                placeholder="e.g. Production OpenAI"
+                value={form.name}
+                onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
+                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900/10"
+              />
+            </div>
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-gray-600 mb-1">API Key</label>
+            <input
+              type="password"
+              required
+              placeholder="sk-ant-... / sk-... / AIza..."
+              value={form.api_key}
+              onChange={e => setForm(f => ({ ...f, api_key: e.target.value }))}
+              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900/10 font-mono"
+            />
+          </div>
+          {form.provider === 'openai-compat' && (
+            <div>
+              <label className="block text-xs font-medium text-gray-600 mb-1">Base URL</label>
+              <input
+                type="url"
+                required
+                placeholder="https://your-endpoint/v1"
+                value={form.base_url}
+                onChange={e => setForm(f => ({ ...f, base_url: e.target.value }))}
+                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900/10 font-mono"
+              />
+            </div>
+          )}
+          {error && <p className="text-xs text-red-500">{error}</p>}
+          <button
+            type="submit"
+            disabled={submitting}
+            className="bg-gray-900 text-white text-sm font-medium px-4 py-2 rounded-lg hover:bg-gray-700 disabled:opacity-50 transition-colors"
+          >
+            {submitting ? 'Saving…' : 'Save key'}
+          </button>
+        </motion.form>
+      )}
+      </AnimatePresence>
+
+      {isLoading ? (
+        <div className="px-6 py-8 text-center text-sm text-gray-400">Loading…</div>
+      ) : keys.length === 0 && !showForm ? (
+        <div className="px-6 py-8 text-center text-sm text-gray-400">No provider keys yet. Add your first key to start routing traffic.</div>
+      ) : (
+        <ul className="divide-y divide-gray-50">
+          {keys.map((k: any) => (
+            <li key={k.id} className="flex items-center gap-4 px-6 py-4">
+              <span className="text-lg">{PROVIDERS[k.provider]?.icon ?? '🔑'}</span>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-sm font-medium text-gray-800">{PROVIDERS[k.provider]?.label ?? k.provider}</span>
+                  {k.name && <span className="text-xs text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">{k.name}</span>}
+                </div>
+                <p className="text-xs text-gray-400 font-mono mt-0.5">
+                  {k.keyHint ?? k.key_hint}
+                  {k.baseUrl && <span className="ml-2 text-gray-300">· {k.baseUrl}</span>}
+                </p>
+              </div>
+              <span className="text-xs text-gray-300 whitespace-nowrap hidden sm:block">
+                {new Date(k.createdAt ?? k.created_at).toLocaleDateString()}
+              </span>
+              <button
+                onClick={() => handleRevoke(k.id)}
+                disabled={revoking === k.id}
+                className="text-xs text-red-400 hover:text-red-600 font-medium disabled:opacity-40 transition-colors flex items-center gap-1"
+              >
+                <Trash2 className="w-3 h-3" />
+                {revoking === k.id ? 'Revoking…' : 'Revoke'}
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
+export default function GatewayPage() {
+  const [days, setDays] = useState(30);
+
+  const { data: summary, isLoading: loadingSummary } = useSWR(
+    `/api/gateway/summary?days=${days}`,
+    fetcher,
+    { refreshInterval: 30000 }
+  );
+
+  const { data: reqData, isLoading: loadingReqs } = useSWR(
+    `/api/gateway/requests?limit=50`,
+    fetcher,
+    { refreshInterval: 30000 }
+  );
+
+  const requests: any[] = reqData?.data ?? [];
+  const loading = loadingSummary || loadingReqs;
+
+  return (
+    <div className="p-4 md:p-6 lg:p-8 space-y-6">
+
+      {/* Header */}
+      <motion.div
+        initial={{ opacity: 0, y: -12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.35 }}
+        className="flex items-center justify-between flex-wrap gap-3"
+      >
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Gateway</h1>
+          <p className="text-sm text-gray-500 mt-0.5">AI cost optimizer — every request, automatically.</p>
+        </div>
+        <div className="flex gap-1 bg-gray-100 rounded-lg p-1">
+          {([7, 30, 90] as const).map(d => (
+            <button
+              key={d}
+              onClick={() => setDays(d)}
+              className={`text-xs px-3 py-1.5 rounded-md font-medium transition-all ${
+                days === d ? 'bg-white shadow text-gray-900' : 'text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              {d}d
+            </button>
+          ))}
+        </div>
+      </motion.div>
+
+      {/* KPI Cards */}
+      {loading ? (
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          {[...Array(4)].map((_, i) => (
+            <div key={i} className="bg-white border border-gray-100 rounded-2xl p-5 h-24 animate-pulse" />
+          ))}
+        </div>
+      ) : (
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <KpiCard
+            label="Total Saved"
+            value={summary ? fmt$(summary.total_savings_usd) : '—'}
+            sub={`vs ${summary ? fmt$(summary.total_baseline_usd) : '$0'} baseline`}
+            icon={TrendingUp}
+            color="bg-emerald-50 text-emerald-600"
+            delay={0.05}
+          />
+          <KpiCard
+            label="Savings Rate"
+            value={summary ? fmtPct(summary.savings_pct) : '—'}
+            sub="of baseline cost recovered"
+            icon={Zap}
+            color="bg-blue-50 text-blue-600"
+            delay={0.1}
+          />
+          <KpiCard
+            label="Cache Hit Rate"
+            value={summary ? fmtPct(summary.cache_hit_rate) : '—'}
+            sub="requests served free"
+            icon={Key}
+            color="bg-violet-50 text-violet-600"
+            delay={0.15}
+          />
+          <KpiCard
+            label="Requests"
+            value={summary ? summary.total_requests.toLocaleString() : '—'}
+            sub={`avg ${summary?.avg_ttft_ms ?? '—'}ms TTFT`}
+            icon={Activity}
+            color="bg-amber-50 text-amber-600"
+            delay={0.2}
+          />
+        </div>
+      )}
+
+      {/* Provider Keys */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.25, duration: 0.45 }}
+      >
+        <ProviderKeysPanel />
+      </motion.div>
+
+      {/* Request Log */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.35, duration: 0.45 }}
+        className="bg-white border border-gray-100 rounded-2xl shadow-sm overflow-hidden"
+      >
+        <div className="px-6 py-4 border-b border-gray-100">
+          <h2 className="text-base font-semibold text-gray-900">Request Log</h2>
+          <p className="text-xs text-gray-400 mt-0.5">Every request processed by the gateway</p>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm min-w-[600px]">
+            <thead>
+              <tr className="text-xs text-gray-400 uppercase tracking-wide border-b border-gray-50">
+                <th className="px-6 py-3 text-left font-medium">Time</th>
+                <th className="px-6 py-3 text-left font-medium">Route</th>
+                <th className="px-6 py-3 text-right font-medium">Tokens</th>
+                <th className="px-6 py-3 text-right font-medium">Cost</th>
+                <th className="px-6 py-3 text-right font-medium">Saved</th>
+                <th className="px-6 py-3 text-left font-medium">Optimizations</th>
+                <th className="px-6 py-3 text-right font-medium">Latency</th>
+              </tr>
+            </thead>
+            <tbody>
+              {loading ? (
+                [...Array(5)].map((_, i) => (
+                  <tr key={i} className="border-b border-gray-50">
+                    {[...Array(7)].map((_, j) => (
+                      <td key={j} className="px-6 py-3">
+                        <div className="h-3 bg-gray-100 rounded animate-pulse" />
+                      </td>
+                    ))}
+                  </tr>
+                ))
+              ) : requests.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="px-6 py-12 text-center text-gray-400 text-sm">
+                    No requests yet — send traffic through the gateway to see it here.
+                  </td>
+                </tr>
+              ) : (
+                requests.map((r: any, i: number) => {
+                  const reqModel = MODEL_SHORT[r.modelRequested ?? r.model_requested] ?? (r.modelRequested ?? r.model_requested);
+                  const usedModel = MODEL_SHORT[r.modelUsed ?? r.model_used] ?? (r.modelUsed ?? r.model_used);
+                  const routed = reqModel !== usedModel;
+                  const savings = parseFloat(String(r.savingsUsd ?? r.savings_usd ?? '0'));
+                  const cost = parseFloat(String(r.costUsd ?? r.cost_usd ?? '0'));
+                  const opts: string[] = r.optimizations ?? [];
+                  return (
+                    <motion.tr
+                      key={r.id}
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ delay: 0.4 + i * 0.02 }}
+                      className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors"
+                    >
+                      <td className="px-6 py-3 text-gray-500 text-xs whitespace-nowrap">
+                        {new Date(r.createdAt ?? r.created_at).toLocaleString(undefined, {
+                          month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit',
+                        })}
+                      </td>
+                      <td className="px-6 py-3 whitespace-nowrap">
+                        <div className="flex items-center gap-1.5 text-xs">
+                          <span className="text-gray-400">{reqModel}</span>
+                          {routed && (
+                            <>
+                              <span className="text-gray-300">→</span>
+                              <span className="font-semibold text-gray-800 bg-emerald-50 px-1.5 py-0.5 rounded">
+                                {usedModel}
+                              </span>
+                            </>
+                          )}
+                          {!routed && (
+                            <span className="font-semibold text-gray-800">{usedModel}</span>
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-6 py-3 text-right text-xs text-gray-600">
+                        {((r.inputTokens ?? r.input_tokens ?? 0) + (r.outputTokens ?? r.output_tokens ?? 0)).toLocaleString()}
+                      </td>
+                      <td className="px-6 py-3 text-right text-xs font-medium text-gray-900">
+                        {(r.fromCache ?? r.from_cache) ? (
+                          <span className="text-emerald-600 font-semibold">Free</span>
+                        ) : fmt$(cost)}
+                      </td>
+                      <td className="px-6 py-3 text-right text-xs font-semibold text-emerald-600">
+                        {savings > 0 ? `+${fmt$(savings)}` : '—'}
+                      </td>
+                      <td className="px-6 py-3">
+                        <div className="flex flex-wrap gap-1">
+                          {opts.map((o: string) => <OptPill key={o} label={o} />)}
+                        </div>
+                      </td>
+                      <td className="px-6 py-3 text-right text-xs text-gray-500">
+                        {r.ttftMs ?? r.ttft_ms ? `${r.ttftMs ?? r.ttft_ms}ms` :
+                         r.totalMs ?? r.total_ms ? `${r.totalMs ?? r.total_ms}ms` : '—'}
+                      </td>
+                    </motion.tr>
+                  );
+                })
+              )}
+            </tbody>
+          </table>
+        </div>
+      </motion.div>
+
+      {/* Setup banner */}
+      <AnimatePresence>
+        {!loading && requests.length === 0 && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ delay: 0.5 }}
+            className="bg-gradient-to-r from-emerald-50 to-blue-50 border border-emerald-100 rounded-2xl p-6"
+          >
+            <h3 className="font-semibold text-gray-900 mb-1">Ready to start saving</h3>
+            <p className="text-sm text-gray-600 mb-3">
+              Point your AI API calls at the gateway. Add a provider key above, then swap your base URL.
+            </p>
+            <code className="block bg-white/80 rounded-lg px-4 py-3 text-xs text-gray-700 font-mono border border-gray-100 overflow-x-auto whitespace-pre">
+{`curl https://claude-gateway-production-e695.up.railway.app/v1/chat/completions \\
+  -H "Authorization: Bearer your-gateway-key" \\
+  -H "Content-Type: application/json" \\
+  -d '{"messages": [{"role":"user","content":"Hello"}]}'`}
+            </code>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
