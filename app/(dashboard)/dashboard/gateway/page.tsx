@@ -26,6 +26,7 @@ const PROVIDERS: Record<string, { label: string; icon: string }> = {
   openai:          { label: 'OpenAI', icon: '🟢' },
   gemini:          { label: 'Google Gemini', icon: '🔵' },
   groq:            { label: 'Groq', icon: '🟣' },
+  openrouter:      { label: 'OpenRouter', icon: '🔶' },
   'openai-compat': { label: 'OpenAI-compat', icon: '⚙️' },
 };
 
@@ -396,14 +397,14 @@ function ProviderKeysPanel() {
               className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900/10 font-mono"
             />
           </div>
-          {form.provider === 'openai-compat' && (
+          {(form.provider === 'openai-compat' || form.provider === 'openrouter') && (
             <div>
               <label className="block text-xs font-medium text-gray-600 mb-1">Base URL</label>
               <input
                 type="url"
                 required
-                placeholder="https://your-endpoint/v1"
-                value={form.base_url}
+                placeholder={form.provider === 'openrouter' ? 'https://openrouter.ai/api/v1' : 'https://your-endpoint/v1'}
+                value={form.base_url || (form.provider === 'openrouter' ? 'https://openrouter.ai/api/v1' : '')}
                 onChange={e => setForm(f => ({ ...f, base_url: e.target.value }))}
                 className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900/10 font-mono"
               />
@@ -460,51 +461,140 @@ function ProviderKeysPanel() {
 }
 
 const GATEWAY_URL = 'https://claude-gateway-production-e695.up.railway.app/v1';
+const GATEWAY_BASE  = 'https://claude-gateway-production-e695.up.railway.app';
 
-function QuickStart({ apiKey }: { apiKey: string }) {
-  const [tab, setTab] = useState<'python' | 'typescript' | 'curl'>('python');
-  const [copied, setCopied] = useState(false);
-  const key = apiKey || '<your-gateway-key>';
+// Per-provider config: default model, provider param, routing note
+const PROVIDER_SNIPPET_CONFIG: Record<string, {
+  label: string;
+  icon: string;
+  model: string;
+  providerParam: string;
+  routesTo: string;
+}> = {
+  anthropic:    { label: 'Claude',      icon: '🟤', model: 'claude-opus-4-7',         providerParam: 'anthropic',    routesTo: 'claude-haiku-4-5' },
+  openai:       { label: 'OpenAI',      icon: '🟢', model: 'gpt-4o',                  providerParam: 'openai',       routesTo: 'gpt-4o-mini' },
+  gemini:       { label: 'Gemini',      icon: '🔵', model: 'gemini-1.5-pro',          providerParam: 'gemini',       routesTo: 'gemini-1.5-flash' },
+  groq:         { label: 'Groq',        icon: '🟣', model: 'llama-3.1-70b-versatile', providerParam: 'groq',         routesTo: 'llama-3.1-8b-instant' },
+  openrouter:   { label: 'OpenRouter',  icon: '🔶', model: 'openai/gpt-4o',           providerParam: 'openai-compat', routesTo: 'openai/gpt-4o-mini' },
+};
 
-  const snippets = {
-    python: `import openai
+type BaseTab = 'typescript' | 'curl';
+type ProviderTab = string; // "py-anthropic", "py-openai", etc.
+type AnyTab = BaseTab | ProviderTab;
+
+function buildSnippets(key: string, activeProviders: string[]): Record<AnyTab, { label: string; code: string }> {
+  const snippets: Record<AnyTab, { label: string; code: string }> = {};
+
+  for (const p of activeProviders) {
+    const cfg = PROVIDER_SNIPPET_CONFIG[p];
+    if (!cfg) continue;
+    const isOpenRouter = p === 'openrouter';
+    const providerArg = p === 'anthropic'
+      ? ''
+      : isOpenRouter
+        ? `\n    extra_body={"provider": "openai-compat", "base_url": "https://openrouter.ai/api/v1"},`
+        : `\n    extra_body={"provider": "${cfg.providerParam}"},`;
+
+    if (p === 'anthropic') {
+      snippets['py-anthropic-sdk'] = {
+        label: '🟤 Claude (anthropic)',
+        code: `# pip install anthropic httpx
+import anthropic, httpx
+
+client = anthropic.Anthropic(
+    api_key="${key}",
+    http_client=httpx.Client(base_url="${GATEWAY_BASE}"),
+)
+msg = client.messages.create(
+    model="${cfg.model}",
+    max_tokens=1024,
+    messages=[{"role": "user", "content": "Hello"}],
+)
+print(msg.content[0].text)`,
+      };
+    }
+
+    snippets[`py-${p}`] = {
+      label: `${cfg.icon} ${cfg.label} (Python)`,
+      code: `# pip install openai==1.57.0
+import openai
 
 client = openai.OpenAI(
     base_url="${GATEWAY_URL}",
     api_key="${key}",
 )
-
 response = client.chat.completions.create(
-    model="claude-opus-4-7",  # gateway routes automatically
-    messages=[{"role": "user", "content": "Hello"}],
+    model="${cfg.model}",  # routes to ${cfg.routesTo} for simple tasks
+    messages=[{"role": "user", "content": "Hello"}],${providerArg}
 )
 print(response.choices[0].message.content)
-print("Saved:", response.gateway_meta["savings_usd"])`,
 
-    typescript: `import OpenAI from 'openai';
+meta = (response.model_extra or {}).get("gateway_meta", {})
+print(f"Model used: {meta.get('model_used')}  Saved: \${meta.get('savings_usd', 0):.6f}")`,
+    };
+  }
 
-const client = new OpenAI({
-  baseURL: '${GATEWAY_URL}',
-  apiKey: '${key}',
-});
+  snippets['typescript'] = {
+    label: 'TypeScript',
+    code: `// npm install openai@^1
+import OpenAI from 'openai';
 
+const client = new OpenAI({ baseURL: '${GATEWAY_URL}', apiKey: '${key}' });
+
+// Change provider: extra_body: { provider: 'openai' | 'gemini' | 'groq' | 'anthropic' }
 const response = await client.chat.completions.create({
-  model: 'claude-opus-4-7', // gateway routes automatically
+  model: 'claude-opus-4-7',
   messages: [{ role: 'user', content: 'Hello' }],
 });
-console.log(response.choices[0].message.content);`,
+console.log(response.choices[0].message.content);
 
-    curl: `curl ${GATEWAY_URL}/chat/completions \\
-  -H "Authorization: Bearer ${key}" \\
-  -H "Content-Type: application/json" \\
-  -d '{
-    "model": "claude-opus-4-7",
-    "messages": [{"role":"user","content":"Hello"}]
-  }'`,
+const meta = (response as any).gateway_meta ?? {};
+console.log('Model used:', meta.model_used, '| Saved: $' + meta.savings_usd);`,
   };
 
+  snippets['curl'] = {
+    label: 'cURL',
+    code: `# Claude (default)
+curl ${GATEWAY_URL}/chat/completions \\
+  -H "Authorization: Bearer ${key}" \\
+  -H "Content-Type: application/json" \\
+  -d '{"model":"claude-opus-4-7","messages":[{"role":"user","content":"Hello"}]}'
+
+# OpenAI — add "provider":"openai"
+curl ${GATEWAY_URL}/chat/completions \\
+  -H "Authorization: Bearer ${key}" \\
+  -H "Content-Type: application/json" \\
+  -d '{"model":"gpt-4o","messages":[{"role":"user","content":"Hello"}],"provider":"openai"}'
+
+# OpenRouter — provider=openai-compat + base_url
+curl ${GATEWAY_URL}/chat/completions \\
+  -H "Authorization: Bearer ${key}" \\
+  -H "Content-Type: application/json" \\
+  -d '{"model":"openai/gpt-4o","messages":[{"role":"user","content":"Hello"}],"provider":"openai-compat","base_url":"https://openrouter.ai/api/v1"}'
+
+# Gemini  — "provider":"gemini"
+# Groq    — "provider":"groq"`,
+  };
+
+  return snippets;
+}
+
+function QuickStart({ apiKey, hasKeys, activeProviders }: {
+  apiKey: string;
+  hasKeys: boolean;
+  activeProviders: string[];
+}) {
+  const key = apiKey || '<your-gateway-key>';
+  const snippets = buildSnippets(key, activeProviders.length > 0 ? activeProviders : ['anthropic']);
+  const tabKeys = Object.keys(snippets) as AnyTab[];
+  const [tab, setTab] = useState<AnyTab>(tabKeys[0]);
+  const [copied, setCopied] = useState(false);
+
+  // Reset to first tab when provider list changes
+  const currentTab = tabKeys.includes(tab) ? tab : tabKeys[0];
+
   const handleCopy = async () => {
-    await navigator.clipboard.writeText(snippets[tab]);
+    await navigator.clipboard.writeText(snippets[currentTab].code);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
@@ -521,20 +611,22 @@ console.log(response.choices[0].message.content);`,
           <h2 className="text-base font-semibold text-gray-900">Quick Start</h2>
           <p className="text-xs text-gray-400 mt-0.5">
             {apiKey
-              ? 'Your key is filled in — copy and paste directly into your code'
-              : 'Generate a Gateway API Key above to see your key filled in here'}
+              ? 'Your key is pre-filled — copy and run directly'
+              : hasKeys
+              ? 'Generate a new key above to auto-fill it here (existing keys are not re-shown for security)'
+              : 'Generate a Gateway API Key above to auto-fill your key into all examples'}
           </p>
         </div>
-        <div className="flex gap-1 bg-gray-100 rounded-lg p-1">
-          {(['python', 'typescript', 'curl'] as const).map(t => (
+        <div className="flex gap-1 bg-gray-100 rounded-lg p-1 flex-wrap">
+          {tabKeys.map(t => (
             <button
               key={t}
               onClick={() => setTab(t)}
               className={`text-xs px-3 py-1.5 rounded-md font-medium transition-all ${
-                tab === t ? 'bg-white shadow text-gray-900' : 'text-gray-500 hover:text-gray-700'
+                currentTab === t ? 'bg-white shadow text-gray-900' : 'text-gray-500 hover:text-gray-700'
               }`}
             >
-              {t === 'typescript' ? 'TypeScript' : t.charAt(0).toUpperCase() + t.slice(1)}
+              {snippets[t].label}
             </button>
           ))}
         </div>
@@ -542,7 +634,7 @@ console.log(response.choices[0].message.content);`,
 
       <div className="relative">
         <pre className="px-6 py-5 text-xs font-mono text-gray-700 bg-gray-50 overflow-x-auto leading-relaxed">
-          <code>{snippets[tab]}</code>
+          <code>{snippets[currentTab]?.code}</code>
         </pre>
         <button
           onClick={handleCopy}
@@ -556,7 +648,9 @@ console.log(response.choices[0].message.content);`,
       {!apiKey && (
         <div className="px-6 py-3 border-t border-gray-50 bg-amber-50/50">
           <p className="text-xs text-amber-700">
-            Generate a Gateway API Key above — it will auto-fill into all code examples here.
+            {hasKeys
+              ? 'Generate a new key above — it will auto-fill here. Replace <your-gateway-key> with your key manually if you already have one.'
+              : 'Generate a Gateway API Key above — it will auto-fill into all code examples here.'}
           </p>
         </div>
       )}
@@ -568,7 +662,20 @@ export default function GatewayPage() {
   const [days, setDays] = useState(30);
   const [newKey, setNewKey] = useState<string | null>(null);
   const { data: gatewayKeys = [] } = useSWR<any[]>('/api/gateway/keys', fetcher);
-  const activeKey = newKey ?? (gatewayKeys.length > 0 ? null : null);
+  const { data: providerKeys = [] } = useSWR<any[]>('/api/provider-keys', fetcher);
+  const activeKey = newKey ?? '';
+  // Derive which providers the user has configured; always include anthropic as default
+  const activeProviders: string[] = (() => {
+    const configured = providerKeys.map((k: any) => k.provider as string);
+    // Normalize openai-compat to openrouter if the stored key is for openrouter
+    const normalized = configured.map(p =>
+      p === 'openai-compat' ? 'openai-compat' : p
+    );
+    const providers = normalized.length > 0 ? normalized : ['anthropic'];
+    // Always show anthropic first
+    const ordered = ['anthropic', 'openai', 'gemini', 'groq', 'openrouter', 'openai-compat'];
+    return ordered.filter(p => providers.includes(p));
+  })();
 
   const { data: summary, isLoading: loadingSummary } = useSWR(
     `/api/gateway/summary?days=${days}`,
@@ -803,7 +910,7 @@ export default function GatewayPage() {
       </motion.div>
 
       {/* Quick Start — always visible */}
-      <QuickStart apiKey={newKey ?? ''} />
+      <QuickStart apiKey={activeKey} hasKeys={gatewayKeys.length > 0} activeProviders={activeProviders} />
     </div>
   );
 }
