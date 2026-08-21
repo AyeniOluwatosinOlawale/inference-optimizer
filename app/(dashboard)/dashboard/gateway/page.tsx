@@ -453,9 +453,116 @@ function ProviderKeysPanel() {
   );
 }
 
+const GATEWAY_URL = 'https://claude-gateway-production-e695.up.railway.app/v1';
+
+function QuickStart({ apiKey }: { apiKey: string }) {
+  const [tab, setTab] = useState<'python' | 'typescript' | 'curl'>('python');
+  const [copied, setCopied] = useState(false);
+  const key = apiKey || '<your-gateway-key>';
+
+  const snippets = {
+    python: `import openai
+
+client = openai.OpenAI(
+    base_url="${GATEWAY_URL}",
+    api_key="${key}",
+)
+
+response = client.chat.completions.create(
+    model="claude-opus-4-7",  # gateway routes automatically
+    messages=[{"role": "user", "content": "Hello"}],
+)
+print(response.choices[0].message.content)
+print("Saved:", response.gateway_meta["savings_usd"])`,
+
+    typescript: `import OpenAI from 'openai';
+
+const client = new OpenAI({
+  baseURL: '${GATEWAY_URL}',
+  apiKey: '${key}',
+});
+
+const response = await client.chat.completions.create({
+  model: 'claude-opus-4-7', // gateway routes automatically
+  messages: [{ role: 'user', content: 'Hello' }],
+});
+console.log(response.choices[0].message.content);`,
+
+    curl: `curl ${GATEWAY_URL}/chat/completions \\
+  -H "Authorization: Bearer ${key}" \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "model": "claude-opus-4-7",
+    "messages": [{"role":"user","content":"Hello"}]
+  }'`,
+  };
+
+  const handleCopy = async () => {
+    await navigator.clipboard.writeText(snippets[tab]);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.45, duration: 0.45 }}
+      className="bg-white border border-gray-100 rounded-2xl shadow-sm overflow-hidden"
+    >
+      <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between flex-wrap gap-3">
+        <div>
+          <h2 className="text-base font-semibold text-gray-900">Quick Start</h2>
+          <p className="text-xs text-gray-400 mt-0.5">
+            {apiKey
+              ? 'Your key is filled in — copy and paste directly into your code'
+              : 'Generate a Gateway API Key above to see your key filled in here'}
+          </p>
+        </div>
+        <div className="flex gap-1 bg-gray-100 rounded-lg p-1">
+          {(['python', 'typescript', 'curl'] as const).map(t => (
+            <button
+              key={t}
+              onClick={() => setTab(t)}
+              className={`text-xs px-3 py-1.5 rounded-md font-medium transition-all ${
+                tab === t ? 'bg-white shadow text-gray-900' : 'text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              {t === 'typescript' ? 'TypeScript' : t.charAt(0).toUpperCase() + t.slice(1)}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="relative">
+        <pre className="px-6 py-5 text-xs font-mono text-gray-700 bg-gray-50 overflow-x-auto leading-relaxed">
+          <code>{snippets[tab]}</code>
+        </pre>
+        <button
+          onClick={handleCopy}
+          className="absolute top-3 right-4 flex items-center gap-1.5 text-xs font-medium text-gray-500 bg-white border border-gray-200 px-2.5 py-1.5 rounded-lg hover:bg-gray-50 transition-colors"
+        >
+          {copied ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
+          {copied ? 'Copied!' : 'Copy'}
+        </button>
+      </div>
+
+      {!apiKey && (
+        <div className="px-6 py-3 border-t border-gray-50 bg-amber-50/50">
+          <p className="text-xs text-amber-700">
+            Generate a Gateway API Key above — it will auto-fill into all code examples here.
+          </p>
+        </div>
+      )}
+    </motion.div>
+  );
+}
+
 export default function GatewayPage() {
   const [days, setDays] = useState(30);
   const [newKey, setNewKey] = useState<string | null>(null);
+  const { data: gatewayKeys = [] } = useSWR<any[]>('/api/gateway/keys', fetcher);
+  const activeKey = newKey ?? (gatewayKeys.length > 0 ? null : null);
 
   const { data: summary, isLoading: loadingSummary } = useSWR(
     `/api/gateway/summary?days=${days}`,
@@ -688,36 +795,8 @@ export default function GatewayPage() {
         </div>
       </motion.div>
 
-      {/* Setup banner — always visible when no requests */}
-      <AnimatePresence>
-        {!loading && requests.length === 0 && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ delay: 0.5 }}
-            className="bg-gradient-to-r from-emerald-50 to-blue-50 border border-emerald-100 rounded-2xl p-6"
-          >
-            <h3 className="font-semibold text-gray-900 mb-1">Ready to start saving</h3>
-            <p className="text-sm text-gray-600 mb-3">
-              {newKey
-                ? 'Your key is shown above — copy it, then use it in your code:'
-                : 'Generate a Gateway API Key above, then point your AI calls at the gateway.'}
-            </p>
-            <code className="block bg-white/80 rounded-lg px-4 py-3 text-xs text-gray-700 font-mono border border-gray-100 overflow-x-auto whitespace-pre">
-{`curl https://claude-gateway-production-e695.up.railway.app/v1/chat/completions \\
-  -H "Authorization: Bearer ${newKey ?? '<your-gateway-key>'}" \\
-  -H "Content-Type: application/json" \\
-  -d '{"messages": [{"role":"user","content":"Hello"}]}'`}
-            </code>
-            {newKey && (
-              <p className="text-xs text-amber-600 mt-2 font-medium">
-                Save this key — it won&apos;t be shown again after you leave this page.
-              </p>
-            )}
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {/* Quick Start — always visible */}
+      <QuickStart apiKey={newKey ?? ''} />
     </div>
   );
 }
