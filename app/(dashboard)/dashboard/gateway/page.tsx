@@ -114,12 +114,16 @@ function CostChart({ days }: { days: number }) {
   );
 }
 
-function GatewayKeysPanel() {
+function GatewayKeysPanel({
+  newKey, setNewKey,
+}: {
+  newKey: string | null;
+  setNewKey: (k: string | null) => void;
+}) {
   const { data: keys = [], mutate, isLoading } = useSWR<any[]>('/api/gateway/keys', fetcher);
   const [showForm, setShowForm] = useState(false);
   const [name, setName] = useState('');
   const [submitting, setSubmitting] = useState(false);
-  const [newKey, setNewKey] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [showKey, setShowKey] = useState(false);
   const [revoking, setRevoking] = useState<number | null>(null);
@@ -451,6 +455,7 @@ function ProviderKeysPanel() {
 
 export default function GatewayPage() {
   const [days, setDays] = useState(30);
+  const [newKey, setNewKey] = useState<string | null>(null);
 
   const { data: summary, isLoading: loadingSummary } = useSWR(
     `/api/gateway/summary?days=${days}`,
@@ -560,7 +565,7 @@ export default function GatewayPage() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.28, duration: 0.45 }}
       >
-        <GatewayKeysPanel />
+        <GatewayKeysPanel newKey={newKey} setNewKey={setNewKey} />
       </motion.div>
 
       <motion.div
@@ -683,7 +688,7 @@ export default function GatewayPage() {
         </div>
       </motion.div>
 
-      {/* Setup banner — only when no requests AND no gateway keys */}
+      {/* Setup banner — always visible when no requests */}
       <AnimatePresence>
         {!loading && requests.length === 0 && (
           <motion.div
@@ -695,14 +700,21 @@ export default function GatewayPage() {
           >
             <h3 className="font-semibold text-gray-900 mb-1">Ready to start saving</h3>
             <p className="text-sm text-gray-600 mb-3">
-              Generate a Gateway API Key above, then point your AI calls at the gateway.
+              {newKey
+                ? 'Your key is shown above — copy it, then use it in your code:'
+                : 'Generate a Gateway API Key above, then point your AI calls at the gateway.'}
             </p>
             <code className="block bg-white/80 rounded-lg px-4 py-3 text-xs text-gray-700 font-mono border border-gray-100 overflow-x-auto whitespace-pre">
 {`curl https://claude-gateway-production-e695.up.railway.app/v1/chat/completions \\
-  -H "Authorization: Bearer <your-gateway-key>" \\
+  -H "Authorization: Bearer ${newKey ?? '<your-gateway-key>'}" \\
   -H "Content-Type: application/json" \\
   -d '{"messages": [{"role":"user","content":"Hello"}]}'`}
             </code>
+            {newKey && (
+              <p className="text-xs text-amber-600 mt-2 font-medium">
+                Save this key — it won&apos;t be shown again after you leave this page.
+              </p>
+            )}
           </motion.div>
         )}
       </AnimatePresence>
