@@ -1,7 +1,7 @@
 'use server';
 
 import { z } from 'zod';
-import { and, eq, sql } from 'drizzle-orm';
+import { and, asc, eq, sql } from 'drizzle-orm';
 import { db } from '@/lib/db/drizzle';
 import {
   User,
@@ -25,6 +25,7 @@ import {
   validatedAction,
   validatedActionWithUser
 } from '@/lib/auth/middleware';
+import { sendWelcomeEmail, sendInvitationEmail } from '@/lib/email';
 
 async function logActivity(
   teamId: number | null | undefined,
@@ -209,7 +210,8 @@ export const signUp = validatedAction(signUpSchema, async (data, formData) => {
   await Promise.all([
     db.insert(teamMembers).values(newTeamMember),
     logActivity(teamId, createdUser.id, ActivityType.SIGN_UP),
-    setSession(createdUser)
+    setSession(createdUser),
+    sendWelcomeEmail(createdUser.email, createdUser.name ?? undefined).catch(() => {}),
   ]);
 
   const redirectTo = formData.get('redirect') as string | null;
@@ -451,8 +453,14 @@ export const inviteTeamMember = validatedActionWithUser(
       ActivityType.INVITE_TEAM_MEMBER
     );
 
-    // TODO: Send invitation email and include ?inviteId={id} to sign-up URL
-    // await sendInvitationEmail(email, userWithTeam.team.name, role)
+    const [team] = await db.select().from(teams).where(eq(teams.id, userWithTeam.teamId)).limit(1);
+    const [newInvite] = await db.select().from(invitations)
+      .where(and(eq(invitations.email, email), eq(invitations.teamId, userWithTeam.teamId), eq(invitations.status, 'pending')))
+      .orderBy(asc(invitations.id))
+      .limit(1);
+    if (newInvite) {
+      sendInvitationEmail(email, team?.name ?? 'your team', role, newInvite.id).catch(() => {});
+    }
 
     return { success: 'Invitation sent successfully' };
   }
