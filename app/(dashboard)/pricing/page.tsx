@@ -82,24 +82,24 @@ const PLANS = [
 
 export default function PricingPage() {
   return (
-    <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+    <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
       {/* Header */}
-      <div className="text-center mb-14">
-        <h1 className="text-4xl font-bold text-gray-900 mb-4">
+      <div className="text-center mb-10 sm:mb-14">
+        <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">
           Pay for what you use. Keep the rest.
         </h1>
-        <p className="text-lg text-gray-500 max-w-2xl mx-auto">
+        <p className="text-base sm:text-lg text-gray-500 max-w-2xl mx-auto">
           Start free. Upgrade when the savings justify it, and they will.
           We also offer savings-based pricing for enterprise: you pay 15% of verified monthly savings.
         </p>
       </div>
 
       {/* Cards */}
-      <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5 lg:gap-6">
         {PLANS.map(plan => (
           <div
             key={plan.name}
-            className={`relative rounded-2xl p-6 flex flex-col ${
+            className={`relative rounded-2xl p-4 sm:p-6 flex flex-col ${
               plan.highlight
                 ? 'bg-gray-900 text-white ring-2 ring-orange-500'
                 : 'bg-white border border-gray-200'
@@ -113,14 +113,14 @@ export default function PricingPage() {
               </div>
             )}
 
-            <div className="mb-6">
+            <div className="mb-5 sm:mb-6">
               <h2 className={`text-lg font-semibold mb-1 ${plan.highlight ? 'text-white' : 'text-gray-900'}`}>
                 {plan.name}
               </h2>
               <div className="flex items-end gap-1.5">
                 {plan.price !== null ? (
                   <>
-                    <span className={`text-4xl font-bold ${plan.highlight ? 'text-white' : 'text-gray-900'}`}>
+                    <span className={`text-3xl sm:text-4xl font-bold ${plan.highlight ? 'text-white' : 'text-gray-900'}`}>
                       £{plan.price}
                     </span>
                     <span className={`text-sm mb-1 ${plan.highlight ? 'text-gray-400' : 'text-gray-500'}`}>
@@ -138,7 +138,7 @@ export default function PricingPage() {
               </p>
             </div>
 
-            <ul className="space-y-3 mb-8 flex-1">
+            <ul className="space-y-2 sm:space-y-3 mb-7 sm:mb-8 flex-1">
               {plan.features.map(f => (
                 <li key={f} className="flex items-start gap-2 text-sm">
                   <Check className={`h-4 w-4 mt-0.5 flex-shrink-0 ${plan.highlight ? 'text-orange-400' : 'text-orange-500'}`} />
@@ -164,11 +164,11 @@ export default function PricingPage() {
       </div>
 
       {/* Savings-based note */}
-      <div className="mt-14 text-center bg-orange-50 border border-orange-100 rounded-2xl p-8">
-        <h3 className="text-xl font-semibold text-gray-900 mb-2">
+      <div className="mt-10 sm:mt-14 text-center bg-orange-50 border border-orange-100 rounded-2xl p-5 sm:p-8">
+        <h3 className="text-lg sm:text-xl font-semibold text-gray-900 mb-2">
           Prefer savings-based pricing?
         </h3>
-        <p className="text-gray-600 max-w-xl mx-auto mb-4">
+        <p className="text-gray-600 max-w-xl mx-auto mb-4 text-sm sm:text-base">
           For enterprise teams: pay 15% of your verified monthly savings instead of a flat fee.
           If we save you £20,000/month, you pay £3,000. If we save you nothing, you pay nothing.
         </p>

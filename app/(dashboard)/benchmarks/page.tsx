@@ -58,17 +58,17 @@ const METHODOLOGY = [
 
 export default function BenchmarksPage() {
   return (
-    <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+    <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
       {/* Header */}
-      <div className="text-center mb-14">
-        <div className="inline-flex items-center gap-2 bg-orange-50 border border-orange-100 rounded-full px-3 py-1 text-xs font-medium text-orange-600 mb-6">
+      <div className="text-center mb-10 sm:mb-14">
+        <div className="inline-flex items-center gap-2 bg-orange-50 border border-orange-100 rounded-full px-3 py-1 text-xs font-medium text-orange-600 mb-5 sm:mb-6">
           <span className="w-1.5 h-1.5 rounded-full bg-orange-500" />
           Measured against Anthropic production API · No synthetic data
         </div>
-        <h1 className="text-4xl font-bold text-gray-900 mb-4">
+        <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">
           Real numbers. Real API calls.
         </h1>
-        <p className="text-lg text-gray-500 max-w-2xl mx-auto">
+        <p className="text-base sm:text-lg text-gray-500 max-w-2xl mx-auto">
           Every figure here was measured against the live Anthropic API.
           We don't pad the numbers - some optimisations help your workload, some don't.
           The aggregate across real traffic is what matters.
@@ -76,46 +76,46 @@ export default function BenchmarksPage() {
       </div>
 
       {/* Headline stats */}
-      <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-16">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6 mb-10 sm:mb-14 lg:mb-16">
         {HEADLINE_STATS.map(s => (
-          <div key={s.label} className="bg-gray-900 rounded-2xl p-6 text-center">
-            <div className="text-4xl font-bold text-orange-500 mb-1">{s.result}</div>
-            <div className="text-sm text-gray-300 font-medium mb-2">{s.unit}</div>
-            <div className="text-xs text-gray-500 leading-relaxed">{s.desc}</div>
+          <div key={s.label} className="bg-gray-900 rounded-2xl p-4 sm:p-6 text-center">
+            <div className="text-3xl sm:text-4xl font-bold text-orange-500 mb-1">{s.result}</div>
+            <div className="text-xs sm:text-sm text-gray-300 font-medium mb-1 sm:mb-2">{s.unit}</div>
+            <div className="text-xs text-gray-500 leading-relaxed hidden sm:block">{s.desc}</div>
           </div>
         ))}
       </div>
 
       {/* Detailed tables */}
-      <div className="space-y-12">
+      <div className="space-y-8 sm:space-y-12">
         {DETAILED.map(section => (
           <div key={section.category}>
-            <h2 className="text-xl font-semibold text-gray-900 mb-4">{section.category}</h2>
-            <div className="overflow-x-auto rounded-2xl border border-gray-200">
-              <table className="w-full text-sm">
+            <h2 className="text-lg sm:text-xl font-semibold text-gray-900 mb-3 sm:mb-4">{section.category}</h2>
+            <div className="overflow-x-auto rounded-2xl border border-gray-200 -mx-1 px-1">
+              <table className="w-full text-xs sm:text-sm min-w-[500px]">
                 <thead>
                   <tr className="bg-gray-50 border-b border-gray-200">
-                    <th className="text-left px-4 py-3 font-medium text-gray-600 w-1/3">Test</th>
-                    <th className="text-right px-4 py-3 font-medium text-gray-600">Baseline</th>
-                    <th className="text-right px-4 py-3 font-medium text-gray-600">Optimised</th>
-                    <th className="text-right px-4 py-3 font-medium text-gray-600">Saving</th>
-                    <th className="text-left px-4 py-3 font-medium text-gray-600 hidden lg:table-cell">Note</th>
+                    <th className="text-left px-3 sm:px-4 py-3 font-medium text-gray-600 w-1/3">Test</th>
+                    <th className="text-right px-3 sm:px-4 py-3 font-medium text-gray-600">Baseline</th>
+                    <th className="text-right px-3 sm:px-4 py-3 font-medium text-gray-600">Optimised</th>
+                    <th className="text-right px-3 sm:px-4 py-3 font-medium text-gray-600">Saving</th>
+                    <th className="text-left px-3 sm:px-4 py-3 font-medium text-gray-600 hidden lg:table-cell">Note</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
                   {section.rows.map((row, i) => (
                     <tr key={i} className="bg-white hover:bg-gray-50 transition-colors">
-                      <td className="px-4 py-3 text-gray-900 font-medium">{row.test}</td>
-                      <td className="px-4 py-3 text-right text-gray-500 font-mono">{row.baseline}</td>
-                      <td className="px-4 py-3 text-right text-gray-900 font-mono font-medium">{row.optimised}</td>
-                      <td className="px-4 py-3 text-right">
+                      <td className="px-3 sm:px-4 py-3 text-gray-900 font-medium">{row.test}</td>
+                      <td className="px-3 sm:px-4 py-3 text-right text-gray-500 font-mono">{row.baseline}</td>
+                      <td className="px-3 sm:px-4 py-3 text-right text-gray-900 font-mono font-medium">{row.optimised}</td>
+                      <td className="px-3 sm:px-4 py-3 text-right">
                         {row.saving !== '-' && row.saving !== '0%' ? (
                           <span className="inline-flex items-center gap-1 text-orange-600 font-semibold">{row.saving}</span>
                         ) : (
                           <span className="text-gray-400">{row.saving}</span>
                         )}
                       </td>
-                      <td className="px-4 py-3 text-gray-500 hidden lg:table-cell">{row.note}</td>
+                      <td className="px-3 sm:px-4 py-3 text-gray-500 hidden lg:table-cell">{row.note}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -126,17 +126,17 @@ export default function BenchmarksPage() {
       </div>
 
       {/* Methodology */}
-      <div className="mt-16 bg-gray-50 rounded-2xl p-8 border border-gray-200">
-        <h2 className="text-xl font-semibold text-gray-900 mb-5">Methodology</h2>
-        <ul className="space-y-2.5">
+      <div className="mt-10 sm:mt-14 lg:mt-16 bg-gray-50 rounded-2xl p-4 sm:p-6 lg:p-8 border border-gray-200">
+        <h2 className="text-lg sm:text-xl font-semibold text-gray-900 mb-4 sm:mb-5">Methodology</h2>
+        <ul className="space-y-2 sm:space-y-2.5">
           {METHODOLOGY.map((m, i) => (
-            <li key={i} className="flex items-start gap-3 text-sm text-gray-600">
+            <li key={i} className="flex items-start gap-3 text-xs sm:text-sm text-gray-600">
               <Check className="h-4 w-4 text-orange-500 mt-0.5 flex-shrink-0" />
               {m}
             </li>
           ))}
         </ul>
-        <div className="mt-6 pt-5 border-t border-gray-200 flex items-center justify-between flex-wrap gap-4">
+        <div className="mt-5 sm:mt-6 pt-4 sm:pt-5 border-t border-gray-200 flex items-center justify-between flex-wrap gap-2 sm:gap-4">
           <p className="text-xs text-gray-400">
             Benchmarks last run: August 2026 · Updated when benchmark suite changes
           </p>

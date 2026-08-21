@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { use, useState, Suspense } from 'react';
 import { Button } from '@/components/ui/button';
-import { CircleIcon, Home, LogOut } from 'lucide-react';
+import { CircleIcon, Home, LogOut, Menu, X } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -34,11 +34,11 @@ function UserMenu() {
       <>
         <Link
           href="/pricing"
-          className="text-sm font-medium text-gray-700 hover:text-gray-900"
+          className="hidden md:inline text-sm font-medium text-gray-700 hover:text-gray-900"
         >
           Pricing
         </Link>
-        <Button asChild className="rounded-full">
+        <Button asChild className="rounded-full text-sm px-4 py-2">
           <Link href="/sign-up">Sign Up</Link>
         </Button>
       </>
@@ -79,23 +79,63 @@ function UserMenu() {
 }
 
 function Header() {
+  const [mobileOpen, setMobileOpen] = useState(false);
+
   return (
-    <header className="border-b border-gray-200">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
-        <Link href="/" className="flex items-center">
-          <CircleIcon className="h-6 w-6 text-orange-500" />
-          <span className="ml-2 text-xl font-semibold text-gray-900">Inference Optimizer</span>
+    <header className="border-b border-gray-200 bg-white">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 sm:py-4 flex justify-between items-center">
+        <Link href="/" className="flex items-center" onClick={() => setMobileOpen(false)}>
+          <CircleIcon className="h-5 w-5 sm:h-6 sm:w-6 text-orange-500 flex-shrink-0" />
+          <span className="ml-2 text-base sm:text-xl font-semibold text-gray-900">Inference Optimizer</span>
         </Link>
+
+        {/* Desktop nav */}
         <nav className="hidden md:flex items-center gap-6 text-sm font-medium text-gray-600">
           <Link href="/benchmarks" className="hover:text-gray-900 transition-colors">Benchmarks</Link>
           <Link href="/pricing" className="hover:text-gray-900 transition-colors">Pricing</Link>
         </nav>
-        <div className="flex items-center space-x-4">
-          <Suspense fallback={<div className="h-9" />}>
+
+        <div className="flex items-center gap-3">
+          <Suspense fallback={<div className="h-9 w-9" />}>
             <UserMenu />
           </Suspense>
+          {/* Hamburger */}
+          <button
+            className="md:hidden p-2 rounded-lg text-gray-500 hover:text-gray-900 hover:bg-gray-100 transition-colors"
+            onClick={() => setMobileOpen(o => !o)}
+            aria-label="Toggle menu"
+          >
+            {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+          </button>
         </div>
       </div>
+
+      {/* Mobile menu */}
+      {mobileOpen && (
+        <div className="md:hidden border-t border-gray-100 bg-white px-4 py-4 space-y-1">
+          <Link
+            href="/benchmarks"
+            className="block py-2.5 px-3 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 hover:text-gray-900 transition-colors"
+            onClick={() => setMobileOpen(false)}
+          >
+            Benchmarks
+          </Link>
+          <Link
+            href="/pricing"
+            className="block py-2.5 px-3 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 hover:text-gray-900 transition-colors"
+            onClick={() => setMobileOpen(false)}
+          >
+            Pricing
+          </Link>
+          <div className="pt-2">
+            <Link href="/sign-up" onClick={() => setMobileOpen(false)}>
+              <Button className="w-full rounded-full bg-orange-500 hover:bg-orange-600 text-white">
+                Get Started Free
+              </Button>
+            </Link>
+          </div>
+        </div>
+      )}
     </header>
   );
 }

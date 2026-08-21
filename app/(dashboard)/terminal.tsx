@@ -51,29 +51,29 @@ export function Terminal() {
   };
 
   return (
-    <div className="w-full rounded-xl shadow-2xl overflow-hidden bg-gray-950 text-white font-mono text-sm relative border border-gray-800">
+    <div className="w-full rounded-xl shadow-2xl overflow-hidden bg-gray-950 text-white font-mono text-xs sm:text-sm relative border border-gray-800">
       {/* Traffic light dots + tab */}
-      <div className="flex items-center justify-between px-4 py-3 bg-gray-900 border-b border-gray-800">
-        <div className="flex space-x-2">
-          <div className="w-3 h-3 rounded-full bg-red-500" />
-          <div className="w-3 h-3 rounded-full bg-yellow-500" />
-          <div className="w-3 h-3 rounded-full bg-green-500" />
+      <div className="flex items-center justify-between px-3 sm:px-4 py-2 sm:py-3 bg-gray-900 border-b border-gray-800">
+        <div className="flex space-x-1.5 sm:space-x-2">
+          <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-red-500" />
+          <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-yellow-500" />
+          <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-green-500" />
         </div>
-        <div className="flex gap-3 text-xs">
+        <div className="flex gap-2 sm:gap-3 text-xs">
           <span className={`px-2 py-0.5 rounded ${!showAfter ? 'bg-gray-700 text-white' : 'text-gray-500'}`}>before.py</span>
           <span className={`px-2 py-0.5 rounded ${showAfter ? 'bg-orange-500/20 text-orange-400 border border-orange-500/30' : 'text-gray-500'}`}>after.py</span>
         </div>
-        <button onClick={copyToClipboard} className="text-gray-400 hover:text-white transition-colors" aria-label="Copy">
+        <button onClick={copyToClipboard} className="text-gray-400 hover:text-white transition-colors p-1" aria-label="Copy">
           {copied ? <Check className="h-4 w-4 text-green-400" /> : <Copy className="h-4 w-4" />}
         </button>
       </div>
 
       {/* Code */}
-      <div className="p-5 space-y-1.5 min-h-[220px]">
+      <div className="p-3 sm:p-5 space-y-1 sm:space-y-1.5 min-h-[180px] sm:min-h-[220px]">
         {lines.map((line, i) => (
           <div
             key={`${showAfter}-${i}`}
-            className={`transition-opacity duration-200 leading-relaxed ${i > step ? 'opacity-0' : 'opacity-100'}`}
+            className={`transition-opacity duration-200 leading-snug sm:leading-relaxed ${i > step ? 'opacity-0' : 'opacity-100'}`}
           >
             {line.startsWith('#') ? (
               <span className="text-gray-500">{line}</span>
@@ -109,7 +109,7 @@ export function Terminal() {
         ))}
         {showAfter && step === lines.length - 1 && (
           <div className="mt-4 pt-4 border-t border-gray-800">
-            <div className="flex gap-4 text-xs">
+            <div className="flex flex-wrap gap-2 sm:gap-4 text-xs">
               <span className="text-green-400">✓ Routed to Haiku</span>
               <span className="text-green-400">✓ Cache hit</span>
               <span className="text-orange-400">↓ 73% cost</span>
