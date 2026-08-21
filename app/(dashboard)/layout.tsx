@@ -108,13 +108,11 @@ function Header() {
           </div>
         </Link>
 
-        {/* Desktop nav */}
-        <nav className="hidden md:flex items-center gap-6 text-sm font-medium text-gray-600">
-          <Link href="/benchmarks" className="hover:text-gray-900 transition-colors">Benchmarks</Link>
-          <Link href="/pricing" className="hover:text-gray-900 transition-colors">Pricing</Link>
-        </nav>
-
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-5">
+          <nav className="hidden md:flex items-center gap-5 text-sm font-medium text-gray-600">
+            <Link href="/benchmarks" className="hover:text-gray-900 transition-colors">Benchmarks</Link>
+            <Link href="/pricing" className="hover:text-gray-900 transition-colors">Pricing</Link>
+          </nav>
           <Suspense fallback={<div className="h-9 w-9" />}>
             <UserMenu />
           </Suspense>
