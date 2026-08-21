@@ -113,7 +113,7 @@ function CostChart({ days }: { days: number }) {
         />
         <Legend wrapperStyle={{ fontSize: 12, paddingTop: 8 }} />
         <Line type="monotone" dataKey="Without optimizer" stroke="#d1d5db" strokeDasharray="5 3"
-          strokeWidth={2} dot={false} />
+          strokeWidth={2} dot={{ r: 3, fill: '#d1d5db' }} activeDot={{ r: 5 }} />
         <Line type="monotone" dataKey="With optimizer" stroke="#10b981"
           strokeWidth={2.5} dot={{ r: 3, fill: '#10b981' }} activeDot={{ r: 5 }} />
       </LineChart>
