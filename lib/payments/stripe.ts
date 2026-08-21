@@ -7,8 +7,20 @@ import {
   updateTeamSubscription
 } from '@/lib/db/queries';
 
-export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2025-04-30.basil'
+let _stripe: Stripe | null = null;
+export function getStripeClient(): Stripe {
+  if (!_stripe) {
+    if (!process.env.STRIPE_SECRET_KEY) {
+      throw new Error('STRIPE_SECRET_KEY is not configured');
+    }
+    _stripe = new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: '2025-04-30.basil' });
+  }
+  return _stripe;
+}
+export const stripe = new Proxy({} as Stripe, {
+  get(_target, prop) {
+    return (getStripeClient() as unknown as Record<string | symbol, unknown>)[prop];
+  }
 });
 
 export async function createCheckoutSession({
