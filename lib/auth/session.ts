@@ -3,7 +3,13 @@ import { SignJWT, jwtVerify } from 'jose';
 import { cookies } from 'next/headers';
 import { NewUser } from '@/lib/db/schema';
 
-const key = new TextEncoder().encode(process.env.AUTH_SECRET);
+function getKey(): Uint8Array {
+  const authSecret = process.env.AUTH_SECRET;
+  if (!authSecret || authSecret.length < 32) {
+    throw new Error('AUTH_SECRET env var must be set and at least 32 characters');
+  }
+  return new TextEncoder().encode(authSecret);
+}
 const SALT_ROUNDS = 10;
 
 export async function hashPassword(password: string) {
@@ -27,11 +33,11 @@ export async function signToken(payload: SessionData) {
     .setProtectedHeader({ alg: 'HS256' })
     .setIssuedAt()
     .setExpirationTime('1 day from now')
-    .sign(key);
+    .sign(getKey());
 }
 
 export async function verifyToken(input: string) {
-  const { payload } = await jwtVerify(input, key, {
+  const { payload } = await jwtVerify(input, getKey(), {
     algorithms: ['HS256'],
   });
   return payload as SessionData;
