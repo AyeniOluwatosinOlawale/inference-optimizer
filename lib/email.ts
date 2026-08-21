@@ -2,7 +2,7 @@ import { Resend } from 'resend';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
-const FROM = process.env.RESEND_FROM_EMAIL ?? 'Inference Optimizer <noreply@inference-web-theta.vercel.app>';
+const FROM = process.env.RESEND_FROM_EMAIL ?? 'Inference Optimizer | AI Inference Gateway <noreply@inference-web-theta.vercel.app>';
 const BASE_URL = process.env.BASE_URL ?? 'https://inference-web-theta.vercel.app';
 
 export async function sendWelcomeEmail(email: string, name?: string) {
