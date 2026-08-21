@@ -125,32 +125,6 @@ export default function BenchmarksPage() {
         ))}
       </div>
 
-      {/* Methodology */}
-      <div className="mt-10 sm:mt-14 lg:mt-16 bg-gray-50 rounded-2xl p-4 sm:p-6 lg:p-8 border border-gray-200">
-        <h2 className="text-lg sm:text-xl font-semibold text-gray-900 mb-4 sm:mb-5">Methodology</h2>
-        <ul className="space-y-2 sm:space-y-2.5">
-          {METHODOLOGY.map((m, i) => (
-            <li key={i} className="flex items-start gap-3 text-xs sm:text-sm text-gray-600">
-              <Check className="h-4 w-4 text-orange-500 mt-0.5 flex-shrink-0" />
-              {m}
-            </li>
-          ))}
-        </ul>
-        <div className="mt-5 sm:mt-6 pt-4 sm:pt-5 border-t border-gray-200 flex items-center justify-between flex-wrap gap-2 sm:gap-4">
-          <p className="text-xs text-gray-400">
-            Benchmarks last run: August 2026 · Updated when benchmark suite changes
-          </p>
-          <a
-            href="https://github.com/AyeniOluwatosinOlawale/inference-optimizer"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 text-xs text-orange-600 hover:text-orange-700 font-medium"
-          >
-            View benchmark source
-            <ExternalLink className="h-3 w-3" />
-          </a>
-        </div>
-      </div>
     </main>
   );
 }
