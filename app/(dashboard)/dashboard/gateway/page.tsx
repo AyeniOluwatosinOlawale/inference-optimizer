@@ -102,7 +102,7 @@ function CostChart({ days }: { days: number }) {
           tickFormatter={v => v === 0 ? '$0' : v < 0.01 ? `${(v * 1e6).toFixed(0)}µ` : `$${v.toFixed(3)}`} />
         <Tooltip
           contentStyle={{ fontSize: 12, borderRadius: 8, border: '1px solid #e5e7eb' }}
-          formatter={(v: any, name: string) => [fmt$(Number(v)), name]}
+          formatter={(v: any, name: any) => [fmt$(Number(v)), name]}
         />
         <Legend wrapperStyle={{ fontSize: 12, paddingTop: 8 }} />
         <Line type="monotone" dataKey="Without optimizer" stroke="#d1d5db" strokeDasharray="5 3"
