@@ -3,7 +3,10 @@
 import { useState } from 'react';
 import useSWR from 'swr';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Key, TrendingUp, Zap, Activity, Plus, X, Trash2 } from 'lucide-react';
+import { Key, TrendingUp, Zap, Activity, Plus, X, Trash2, Copy, Check, Eye, EyeOff } from 'lucide-react';
+import {
+  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
+} from 'recharts';
 
 const fetcher = (url: string) => fetch(url).then(r => r.json());
 
@@ -66,6 +69,211 @@ function OptPill({ label }: { label: string }) {
     <span className={`inline-block text-xs px-1.5 py-0.5 rounded font-medium ${colors[label] ?? 'bg-gray-100 text-gray-600'}`}>
       {label.replace('_', ' ')}
     </span>
+  );
+}
+
+function CostChart({ days }: { days: number }) {
+  const { data, isLoading } = useSWR(`/api/gateway/timeseries?days=${days}`, fetcher, { refreshInterval: 30000 });
+  const rows: any[] = data?.data ?? [];
+
+  if (isLoading) {
+    return <div className="h-48 flex items-center justify-center text-sm text-gray-400 animate-pulse">Loading chart…</div>;
+  }
+  if (rows.length === 0) {
+    return (
+      <div className="h-48 flex items-center justify-center text-sm text-gray-400">
+        No data yet — chart will appear after your first requests.
+      </div>
+    );
+  }
+
+  const formatted = rows.map(r => ({
+    date: new Date(r.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }),
+    'Without optimizer': parseFloat(r.baseline.toFixed(6)),
+    'With optimizer': parseFloat(r.cost.toFixed(6)),
+  }));
+
+  return (
+    <ResponsiveContainer width="100%" height={200}>
+      <LineChart data={formatted} margin={{ top: 4, right: 8, left: -10, bottom: 0 }}>
+        <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
+        <XAxis dataKey="date" tick={{ fontSize: 11, fill: '#9ca3af' }} axisLine={false} tickLine={false} />
+        <YAxis tick={{ fontSize: 11, fill: '#9ca3af' }} axisLine={false} tickLine={false}
+          tickFormatter={v => v === 0 ? '$0' : v < 0.01 ? `${(v * 1e6).toFixed(0)}µ` : `$${v.toFixed(3)}`} />
+        <Tooltip
+          contentStyle={{ fontSize: 12, borderRadius: 8, border: '1px solid #e5e7eb' }}
+          formatter={(v: any, name: string) => [fmt$(Number(v)), name]}
+        />
+        <Legend wrapperStyle={{ fontSize: 12, paddingTop: 8 }} />
+        <Line type="monotone" dataKey="Without optimizer" stroke="#d1d5db" strokeDasharray="5 3"
+          strokeWidth={2} dot={false} />
+        <Line type="monotone" dataKey="With optimizer" stroke="#10b981"
+          strokeWidth={2.5} dot={{ r: 3, fill: '#10b981' }} activeDot={{ r: 5 }} />
+      </LineChart>
+    </ResponsiveContainer>
+  );
+}
+
+function GatewayKeysPanel() {
+  const { data: keys = [], mutate, isLoading } = useSWR<any[]>('/api/gateway/keys', fetcher);
+  const [showForm, setShowForm] = useState(false);
+  const [name, setName] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [newKey, setNewKey] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
+  const [showKey, setShowKey] = useState(false);
+  const [revoking, setRevoking] = useState<number | null>(null);
+
+  const handleCreate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSubmitting(true);
+    try {
+      const res = await fetch('/api/gateway/keys', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: name.trim() || null }),
+      });
+      const data = await res.json();
+      setNewKey(data.key);
+      setName('');
+      setShowForm(false);
+      mutate();
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleCopy = async () => {
+    if (!newKey) return;
+    await navigator.clipboard.writeText(newKey);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleRevoke = async (id: number) => {
+    setRevoking(id);
+    try {
+      await fetch(`/api/gateway/keys/${id}`, { method: 'DELETE' });
+      mutate();
+    } finally {
+      setRevoking(null);
+    }
+  };
+
+  return (
+    <div className="bg-white border border-gray-100 rounded-2xl shadow-sm overflow-hidden">
+      <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between gap-3">
+        <div>
+          <h2 className="text-base font-semibold text-gray-900">Gateway API Keys</h2>
+          <p className="text-xs text-gray-400 mt-0.5">Bearer tokens for calling the gateway — generate one per app or environment</p>
+        </div>
+        <button
+          onClick={() => { setShowForm(v => !v); setNewKey(null); }}
+          className="flex items-center gap-1.5 text-xs font-medium bg-gray-900 text-white px-3 py-1.5 rounded-lg hover:bg-gray-700 transition-colors"
+        >
+          {showForm ? <X className="w-3.5 h-3.5" /> : <Plus className="w-3.5 h-3.5" />}
+          {showForm ? 'Cancel' : 'Generate key'}
+        </button>
+      </div>
+
+      <AnimatePresence>
+        {showForm && (
+          <motion.form
+            key="create-key-form"
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.2 }}
+            onSubmit={handleCreate}
+            className="px-6 py-4 border-b border-gray-50 bg-gray-50/50 flex items-end gap-3 overflow-hidden"
+          >
+            <div className="flex-1">
+              <label className="block text-xs font-medium text-gray-600 mb-1">Label (optional)</label>
+              <input
+                type="text"
+                placeholder="e.g. Production, My App"
+                value={name}
+                onChange={e => setName(e.target.value)}
+                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900/10"
+              />
+            </div>
+            <button
+              type="submit"
+              disabled={submitting}
+              className="bg-gray-900 text-white text-sm font-medium px-4 py-2 rounded-lg hover:bg-gray-700 disabled:opacity-50 transition-colors whitespace-nowrap"
+            >
+              {submitting ? 'Generating…' : 'Generate'}
+            </button>
+          </motion.form>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {newKey && (
+          <motion.div
+            key="new-key-banner"
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            className="px-6 py-4 border-b border-emerald-100 bg-emerald-50 overflow-hidden"
+          >
+            <p className="text-xs font-medium text-emerald-800 mb-2">
+              Key generated — copy it now. It won&apos;t be shown again.
+            </p>
+            <div className="flex items-center gap-2">
+              <code className="flex-1 bg-white border border-emerald-200 rounded-lg px-3 py-2 text-xs font-mono text-gray-800 overflow-x-auto">
+                {showKey ? newKey : newKey.slice(0, 8) + '•'.repeat(20)}
+              </code>
+              <button onClick={() => setShowKey(v => !v)} className="text-emerald-600 hover:text-emerald-800 transition-colors p-1">
+                {showKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
+              <button onClick={handleCopy} className="flex items-center gap-1 text-xs font-medium text-emerald-700 bg-white border border-emerald-200 px-3 py-2 rounded-lg hover:bg-emerald-50 transition-colors whitespace-nowrap">
+                {copied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+                {copied ? 'Copied!' : 'Copy'}
+              </button>
+              <button onClick={() => setNewKey(null)} className="text-gray-400 hover:text-gray-600 p-1">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {isLoading ? (
+        <div className="px-6 py-8 text-center text-sm text-gray-400">Loading…</div>
+      ) : keys.length === 0 && !showForm ? (
+        <div className="px-6 py-8 text-center text-sm text-gray-400">
+          No gateway keys yet. Generate one to start routing traffic.
+        </div>
+      ) : (
+        <ul className="divide-y divide-gray-50">
+          {keys.map((k: any) => (
+            <li key={k.id} className="flex items-center gap-4 px-6 py-4">
+              <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center flex-shrink-0">
+                <Key className="w-3.5 h-3.5 text-gray-500" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-sm font-medium text-gray-800">{k.name ?? 'Unnamed key'}</span>
+                </div>
+                <p className="text-xs text-gray-400 font-mono mt-0.5">{k.keyPrefix}{'•'.repeat(12)}</p>
+              </div>
+              <span className="text-xs text-gray-300 whitespace-nowrap hidden sm:block">
+                {new Date(k.createdAt).toLocaleDateString()}
+              </span>
+              <button
+                onClick={() => handleRevoke(k.id)}
+                disabled={revoking === k.id}
+                className="text-xs text-red-400 hover:text-red-600 font-medium disabled:opacity-40 transition-colors flex items-center gap-1"
+              >
+                <Trash2 className="w-3 h-3" />
+                {revoking === k.id ? 'Revoking…' : 'Revoke'}
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
   );
 }
 
@@ -332,11 +540,33 @@ export default function GatewayPage() {
         </div>
       )}
 
-      {/* Provider Keys */}
+      {/* Cost Chart */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.25, duration: 0.45 }}
+        transition={{ delay: 0.22, duration: 0.45 }}
+        className="bg-white border border-gray-100 rounded-2xl shadow-sm p-6"
+      >
+        <div className="mb-4">
+          <h2 className="text-base font-semibold text-gray-900">Cost vs Baseline</h2>
+          <p className="text-xs text-gray-400 mt-0.5">The gap between the lines is money you kept</p>
+        </div>
+        <CostChart days={days} />
+      </motion.div>
+
+      {/* Gateway Keys + Provider Keys */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.28, duration: 0.45 }}
+      >
+        <GatewayKeysPanel />
+      </motion.div>
+
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.33, duration: 0.45 }}
       >
         <ProviderKeysPanel />
       </motion.div>
@@ -345,7 +575,7 @@ export default function GatewayPage() {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.35, duration: 0.45 }}
+        transition={{ delay: 0.4, duration: 0.45 }}
         className="bg-white border border-gray-100 rounded-2xl shadow-sm overflow-hidden"
       >
         <div className="px-6 py-4 border-b border-gray-100">
@@ -389,13 +619,17 @@ export default function GatewayPage() {
                   const routed = reqModel !== usedModel;
                   const savings = parseFloat(String(r.savingsUsd ?? r.savings_usd ?? '0'));
                   const cost = parseFloat(String(r.costUsd ?? r.cost_usd ?? '0'));
-                  const opts: string[] = r.optimizations ?? [];
+                  const opts: string[] = (() => {
+                    const raw = r.optimizations ?? [];
+                    if (typeof raw === 'string') { try { return JSON.parse(raw); } catch { return []; } }
+                    return raw;
+                  })();
                   return (
                     <motion.tr
                       key={r.id}
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
-                      transition={{ delay: 0.4 + i * 0.02 }}
+                      transition={{ delay: 0.45 + i * 0.02 }}
                       className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors"
                     >
                       <td className="px-6 py-3 text-gray-500 text-xs whitespace-nowrap">
@@ -414,9 +648,7 @@ export default function GatewayPage() {
                               </span>
                             </>
                           )}
-                          {!routed && (
-                            <span className="font-semibold text-gray-800">{usedModel}</span>
-                          )}
+                          {!routed && <span className="font-semibold text-gray-800">{usedModel}</span>}
                         </div>
                       </td>
                       <td className="px-6 py-3 text-right text-xs text-gray-600">
@@ -436,8 +668,11 @@ export default function GatewayPage() {
                         </div>
                       </td>
                       <td className="px-6 py-3 text-right text-xs text-gray-500">
-                        {r.ttftMs ?? r.ttft_ms ? `${r.ttftMs ?? r.ttft_ms}ms` :
-                         r.totalMs ?? r.total_ms ? `${r.totalMs ?? r.total_ms}ms` : '—'}
+                        {r.ttftMs ?? r.ttft_ms
+                          ? `${r.ttftMs ?? r.ttft_ms}ms`
+                          : r.totalMs ?? r.total_ms
+                          ? `${r.totalMs ?? r.total_ms}ms`
+                          : '—'}
                       </td>
                     </motion.tr>
                   );
@@ -448,7 +683,7 @@ export default function GatewayPage() {
         </div>
       </motion.div>
 
-      {/* Setup banner */}
+      {/* Setup banner — only when no requests AND no gateway keys */}
       <AnimatePresence>
         {!loading && requests.length === 0 && (
           <motion.div
@@ -460,11 +695,11 @@ export default function GatewayPage() {
           >
             <h3 className="font-semibold text-gray-900 mb-1">Ready to start saving</h3>
             <p className="text-sm text-gray-600 mb-3">
-              Point your AI API calls at the gateway. Add a provider key above, then swap your base URL.
+              Generate a Gateway API Key above, then point your AI calls at the gateway.
             </p>
             <code className="block bg-white/80 rounded-lg px-4 py-3 text-xs text-gray-700 font-mono border border-gray-100 overflow-x-auto whitespace-pre">
 {`curl https://claude-gateway-production-e695.up.railway.app/v1/chat/completions \\
-  -H "Authorization: Bearer your-gateway-key" \\
+  -H "Authorization: Bearer <your-gateway-key>" \\
   -H "Content-Type: application/json" \\
   -d '{"messages": [{"role":"user","content":"Hello"}]}'`}
             </code>
