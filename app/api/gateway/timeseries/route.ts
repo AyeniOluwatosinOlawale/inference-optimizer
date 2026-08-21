@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { eq, and, gte } from 'drizzle-orm';
+import { eq, and, gte, or, isNull } from 'drizzle-orm';
 import { db } from '@/lib/db/drizzle';
 import { gatewayRequests } from '@/lib/db/schema';
 import { getUser, getUserWithTeam } from '@/lib/db/queries';
@@ -23,7 +23,7 @@ export async function GET(req: NextRequest) {
       savingsUsd: gatewayRequests.savingsUsd,
     })
     .from(gatewayRequests)
-    .where(and(eq(gatewayRequests.teamId, teamId), gte(gatewayRequests.createdAt, since)));
+    .where(and(or(eq(gatewayRequests.teamId, teamId), isNull(gatewayRequests.teamId)), gte(gatewayRequests.createdAt, since)));
 
   // Group by date
   const byDate: Record<string, { cost: number; baseline: number; savings: number; requests: number }> = {};
