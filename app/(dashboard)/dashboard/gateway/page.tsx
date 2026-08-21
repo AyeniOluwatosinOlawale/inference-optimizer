@@ -99,7 +99,7 @@ function CostChart({ days }: { days: number }) {
         <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
         <XAxis dataKey="date" tick={{ fontSize: 11, fill: '#9ca3af' }} axisLine={false} tickLine={false} />
         <YAxis tick={{ fontSize: 11, fill: '#9ca3af' }} axisLine={false} tickLine={false}
-          tickFormatter={v => v === 0 ? '$0' : v < 0.01 ? `${(v * 1e6).toFixed(0)}µ` : `$${v.toFixed(3)}`} />
+          tickFormatter={v => `$${Number(v).toFixed(4)}`} />
         <Tooltip
           contentStyle={{ fontSize: 12, borderRadius: 8, border: '1px solid #e5e7eb' }}
           formatter={(v: any, name: any) => [fmt$(Number(v)), name]}
