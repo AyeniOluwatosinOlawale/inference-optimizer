@@ -3,7 +3,31 @@
 import Link from 'next/link';
 import { use, useState, Suspense } from 'react';
 import { Button } from '@/components/ui/button';
-import { CircleIcon, Home, LogOut, Menu, X } from 'lucide-react';
+import { Home, LogOut, Menu, X } from 'lucide-react';
+
+function LogoIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 36 36" className={className} fill="none" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="og-h" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor="#fb923c" />
+          <stop offset="60%" stopColor="#f97316" />
+          <stop offset="100%" stopColor="#c2410c" />
+        </linearGradient>
+      </defs>
+      {/* Ribbon top-left to bottom-right */}
+      <path d="M4 6 L4 12 L22 28 L28 28 L28 22 L10 6 Z" fill="url(#og-h)" />
+      {/* Ribbon top-right column */}
+      <path d="M20 6 L28 6 L28 14 L24 14 L24 10 L20 10 Z" fill="url(#og-h)" opacity="0.85" />
+      {/* Ribbon bottom-left column */}
+      <path d="M4 22 L8 22 L8 26 L12 26 L12 30 L4 30 Z" fill="url(#og-h)" opacity="0.85" />
+      {/* Speed lines */}
+      <line x1="30" y1="11" x2="35" y2="11" stroke="#fb923c" strokeWidth="2.2" strokeLinecap="round" />
+      <line x1="30" y1="16" x2="36" y2="16" stroke="#f97316" strokeWidth="2.2" strokeLinecap="round" />
+      <line x1="30" y1="21" x2="35" y2="21" stroke="#ea580c" strokeWidth="2.2" strokeLinecap="round" />
+    </svg>
+  );
+}
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -76,9 +100,12 @@ function Header() {
   return (
     <header className="border-b border-gray-200 bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 sm:py-4 flex justify-between items-center">
-        <Link href="/" className="flex items-center" onClick={() => setMobileOpen(false)}>
-          <CircleIcon className="h-5 w-5 sm:h-6 sm:w-6 text-orange-500 flex-shrink-0" />
-          <span className="ml-2 text-base sm:text-xl font-semibold text-gray-900">Inference Optimizer</span>
+        <Link href="/" className="flex items-center gap-2" onClick={() => setMobileOpen(false)}>
+          <LogoIcon className="h-7 w-7 sm:h-8 sm:w-8 flex-shrink-0" />
+          <div className="flex flex-col leading-none">
+            <span className="text-sm sm:text-base font-bold text-gray-900 tracking-tight">Inference Optimizer</span>
+            <span className="text-[9px] sm:text-[10px] font-semibold tracking-widest text-orange-500 uppercase">AI Inference Gateway</span>
+          </div>
         </Link>
 
         {/* Desktop nav */}

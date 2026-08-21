@@ -6,7 +6,27 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { CircleIcon, Loader2, Eye, EyeOff, ArrowLeft } from 'lucide-react';
+import { Loader2, Eye, EyeOff, ArrowLeft } from 'lucide-react';
+
+function LogoIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 36 36" className={className} fill="none" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="og-l" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor="#fb923c" />
+          <stop offset="60%" stopColor="#f97316" />
+          <stop offset="100%" stopColor="#c2410c" />
+        </linearGradient>
+      </defs>
+      <path d="M4 6 L4 12 L22 28 L28 28 L28 22 L10 6 Z" fill="url(#og-l)" />
+      <path d="M20 6 L28 6 L28 14 L24 14 L24 10 L20 10 Z" fill="url(#og-l)" opacity="0.85" />
+      <path d="M4 22 L8 22 L8 26 L12 26 L12 30 L4 30 Z" fill="url(#og-l)" opacity="0.85" />
+      <line x1="30" y1="11" x2="35" y2="11" stroke="#fb923c" strokeWidth="2.2" strokeLinecap="round" />
+      <line x1="30" y1="16" x2="36" y2="16" stroke="#f97316" strokeWidth="2.2" strokeLinecap="round" />
+      <line x1="30" y1="21" x2="35" y2="21" stroke="#ea580c" strokeWidth="2.2" strokeLinecap="round" />
+    </svg>
+  );
+}
 import { signIn, signUp } from './actions';
 import { ActionState } from '@/lib/auth/middleware';
 
@@ -37,8 +57,12 @@ export function Login({ mode = 'signin' }: { mode?: 'signin' | 'signup' }) {
       </div>
 
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="flex justify-center">
-          <CircleIcon className="h-12 w-12 text-orange-500" />
+        <div className="flex flex-col items-center gap-2">
+          <LogoIcon className="h-14 w-14" />
+          <div className="text-center">
+            <p className="text-base font-bold text-gray-900 tracking-tight">Inference Optimizer</p>
+            <p className="text-[10px] font-semibold tracking-widest text-orange-500 uppercase">AI Inference Gateway</p>
+          </div>
         </div>
         <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
           {mode === 'signin'
