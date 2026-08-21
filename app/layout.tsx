@@ -5,7 +5,7 @@ import { getUser, getTeamForUser } from '@/lib/db/queries';
 import { SWRConfig } from 'swr';
 
 export const metadata: Metadata = {
-  title: 'Inference Optimizer — Make Your LLM APIs Faster. Cheaper. Automatically.',
+  title: 'Inference Optimizer: Make Your LLM APIs Faster. Cheaper. Automatically.',
   description: 'Route, cache and optimise your AI inference across Claude, GPT and Gemini. 13 optimisations. One line of code. Measurable savings from day one.',
   keywords: ['LLM', 'AI inference', 'Claude', 'OpenAI', 'cost optimisation', 'API gateway', 'model routing'],
   openGraph: {

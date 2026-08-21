@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { Copy, Check } from 'lucide-react';
 
 const BEFORE_LINES = [
-  '# Before — direct API call, no optimisation',
+  '# Before: direct API call, no optimisation',
   'client = Anthropic(',
   '    api_key="sk-ant-your-key"',
   ')',
@@ -15,7 +15,7 @@ const BEFORE_LINES = [
 ];
 
 const AFTER_LINES = [
-  '# After — one line change, 13 optimisations applied',
+  '# After: one line change, 13 optimisations applied',
   'client = Anthropic(',
   '    base_url="https://gateway.inferenceoptimizer.com",',
   '    api_key="your-gateway-key"',

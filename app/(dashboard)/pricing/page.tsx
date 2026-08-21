@@ -89,7 +89,7 @@ export default function PricingPage() {
           Pay for what you use. Keep the rest.
         </h1>
         <p className="text-lg text-gray-500 max-w-2xl mx-auto">
-          Start free. Upgrade when the savings justify it — and they will.
+          Start free. Upgrade when the savings justify it, and they will.
           We also offer savings-based pricing for enterprise: you pay 15% of verified monthly savings.
         </p>
       </div>

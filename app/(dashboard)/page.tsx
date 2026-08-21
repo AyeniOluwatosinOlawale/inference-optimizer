@@ -47,7 +47,7 @@ const FEATURES = [
 const HOW_IT_WORKS = [
   { step: '01', title: 'Get your gateway key', desc: 'Sign up, create a project, copy your key. Under 60 seconds.' },
   { step: '02', title: 'Change one line', desc: 'Point your existing Anthropic/OpenAI client at the gateway URL. Nothing else changes.' },
-  { step: '03', title: 'We optimise every request', desc: '13 optimisations applied automatically — routing, caching, compression, fallback and more.' },
+  { step: '03', title: 'We optimise every request', desc: '13 optimisations applied automatically: routing, caching, compression, fallback and more.' },
   { step: '04', title: 'Track your savings', desc: 'Open the dashboard. See exactly how much we saved you today, this week, this month.' },
 ];
 
@@ -99,7 +99,7 @@ export default function HomePage() {
       <section className="py-14 bg-gray-900">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <p className="text-center text-xs font-semibold uppercase tracking-widest text-gray-500 mb-10">
-            Real benchmark results — measured, not estimated
+            Real benchmark results, measured not estimated
           </p>
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 text-center">
             {BENCHMARKS.map(b => (
@@ -193,7 +193,7 @@ Haiku/Opus     4o/mini       Pro/Flash`}</pre>
             Stop treating LLM costs as fixed.
           </h2>
           <p className="text-gray-500 text-lg mb-8">
-            Optimise your inference. The savings are real — and measurable from request one.
+            Optimise your inference. The savings are real and measurable from request one.
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <Link href="/sign-up">

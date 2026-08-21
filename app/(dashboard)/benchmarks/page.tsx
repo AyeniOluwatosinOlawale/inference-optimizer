@@ -14,15 +14,15 @@ const DETAILED = [
       { test: '2-call sequential → parallel',  baseline: '2,414 ms', optimised: '1,203 ms', saving: '50.2%',  note: 'Two independent summarisation tasks' },
       { test: '3-call sequential → parallel',  baseline: '3,621 ms', optimised: '935 ms',   saving: '74.2%',  note: 'Typical multi-step agent workflow' },
       { test: '5-call sequential → parallel',  baseline: '6,034 ms', optimised: '1,559 ms', saving: '74.2%',  note: 'Full pipeline with classification + 4 transforms' },
-      { test: 'Avg speedup (all tests)',        baseline: '—',        optimised: '—',         saving: '3.87×',  note: 'Geometric mean over 12 test scenarios' },
+      { test: 'Avg speedup (all tests)',        baseline: '-',        optimised: '-',         saving: '3.87×',  note: 'Geometric mean over 12 test scenarios' },
     ],
   },
   {
     category: 'Prompt Caching',
     rows: [
-      { test: 'Long system prompt (8K tokens)', baseline: '$0.0240', optimised: '$0.0026', saving: '89.2%', note: 'Cache hit — 90% discount on input tokens' },
+      { test: 'Long system prompt (8K tokens)', baseline: '$0.0240', optimised: '$0.0026', saving: '89.2%', note: 'Cache hit - 90% discount on input tokens' },
       { test: 'Short system prompt (1K tokens)',baseline: '$0.0030', optimised: '$0.0012', saving: '60.0%', note: 'Partial cache benefit' },
-      { test: 'Average cache saving',           baseline: '—',       optimised: '—',       saving: '61.4%', note: 'Weighted average across workload mix' },
+      { test: 'Average cache saving',           baseline: '-',       optimised: '-',       saving: '61.4%', note: 'Weighted average across workload mix' },
       { test: 'TTFT with cache hit',            baseline: '812 ms',  optimised: '91 ms',   saving: '88.8%', note: 'Time-to-first-token improvement' },
     ],
   },
@@ -38,7 +38,7 @@ const DETAILED = [
   {
     category: 'Throughput & Concurrency',
     rows: [
-      { test: 'Single-threaded baseline',    baseline: '1×',   optimised: '—',   saving: '—',   note: 'Reference: sync anthropic SDK, default settings' },
+      { test: 'Single-threaded baseline',    baseline: '1×',   optimised: '-',   saving: '-',   note: 'Reference: sync anthropic SDK, default settings' },
       { test: 'Async connection pool (8)',    baseline: '1×',   optimised: '8×',  saving: '+8×', note: 'asyncio + httpx connection pool' },
       { test: 'Async + request coalescing',  baseline: '1×',   optimised: '14×', saving: '+14×',note: 'Identical concurrent requests collapsed to one' },
       { test: 'P99 latency under load',      baseline: '4,200 ms', optimised: '890 ms', saving: '78.8%', note: '100 concurrent req/s sustained' },
@@ -47,7 +47,7 @@ const DETAILED = [
 ];
 
 const METHODOLOGY = [
-  'All benchmarks run against Anthropic production API — no mocks or stubs',
+  'All benchmarks run against Anthropic production API - no mocks or stubs',
   'Prompt caching tests use claude-sonnet-4-6 with cache_control breakpoints',
   'Model routing uses a prompt complexity classifier trained on Anthropic\'s public eval sets',
   'Parallelisation tests use asyncio.gather() with 8 workers and a shared connection pool',
@@ -70,7 +70,7 @@ export default function BenchmarksPage() {
         </h1>
         <p className="text-lg text-gray-500 max-w-2xl mx-auto">
           Every figure here was measured against the live Anthropic API.
-          We don't pad the numbers — some optimisations help your workload, some don't.
+          We don't pad the numbers - some optimisations help your workload, some don't.
           The aggregate across real traffic is what matters.
         </p>
       </div>
@@ -109,7 +109,7 @@ export default function BenchmarksPage() {
                       <td className="px-4 py-3 text-right text-gray-500 font-mono">{row.baseline}</td>
                       <td className="px-4 py-3 text-right text-gray-900 font-mono font-medium">{row.optimised}</td>
                       <td className="px-4 py-3 text-right">
-                        {row.saving !== '—' && row.saving !== '0%' ? (
+                        {row.saving !== '-' && row.saving !== '0%' ? (
                           <span className="inline-flex items-center gap-1 text-orange-600 font-semibold">{row.saving}</span>
                         ) : (
                           <span className="text-gray-400">{row.saving}</span>
