@@ -28,7 +28,7 @@ export function Login({ mode = 'signin' }: { mode?: 'signin' | 'signup' }) {
       <div className="sm:mx-auto sm:w-full sm:max-w-md mb-2">
         <button
           type="button"
-          onClick={() => router.back()}
+          onClick={() => window.history.length > 1 ? router.back() : router.push('/')}
           className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-800 transition-colors"
         >
           <ArrowLeft className="h-4 w-4" />
@@ -82,7 +82,7 @@ export function Login({ mode = 'signin' }: { mode?: 'signin' | 'signup' }) {
               Password
             </Label>
             <div className="mt-1 relative">
-              <Input
+              <input
                 id="password"
                 name="password"
                 type={showPassword ? 'text' : 'password'}
@@ -93,14 +93,15 @@ export function Login({ mode = 'signin' }: { mode?: 'signin' | 'signup' }) {
                 required
                 minLength={8}
                 maxLength={100}
-                className="appearance-none rounded-full relative block w-full px-3 py-2 pr-10 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-orange-500 focus:border-orange-500 focus:z-10 sm:text-sm"
+                className="appearance-none rounded-full block w-full px-3 py-2 pr-10 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-orange-500 focus:border-orange-500 sm:text-sm [&::-ms-reveal]:hidden [&::-webkit-credentials-auto-fill-button]:hidden"
                 placeholder="Enter your password"
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(v => !v)}
-                className="absolute inset-y-0 right-3 flex items-center text-gray-400 hover:text-gray-600 transition-colors"
+                className="absolute inset-y-0 right-3 flex items-center text-gray-400 hover:text-gray-600 transition-colors z-10"
                 tabIndex={-1}
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
               >
                 {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
               </button>
