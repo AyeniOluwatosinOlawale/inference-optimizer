@@ -73,7 +73,7 @@ export const invitations = pgTable('invitations', {
 });
 
 export const providerKeys = pgTable(
-  'provider_keys',
+  'iw_provider_keys',
   {
     id: serial('id').primaryKey(),
     teamId: integer('team_id').notNull().references(() => teams.id),
@@ -87,7 +87,7 @@ export const providerKeys = pgTable(
   (t) => [unique().on(t.teamId, t.provider)]
 );
 
-export const gatewayRequests = pgTable('gateway_requests', {
+export const gatewayRequests = pgTable('iw_gateway_requests', {
   id: serial('id').primaryKey(),
   teamId: integer('team_id').references(() => teams.id),
   provider: varchar('provider', { length: 50 }).notNull().default('anthropic'),
@@ -108,7 +108,7 @@ export const gatewayRequests = pgTable('gateway_requests', {
   createdAt: timestamp('created_at').notNull().defaultNow(),
 });
 
-export const gatewayApiKeys = pgTable('gateway_api_keys', {
+export const gatewayApiKeys = pgTable('iw_gateway_api_keys', {
   id: serial('id').primaryKey(),
   teamId: integer('team_id').notNull().references(() => teams.id),
   keyHash: varchar('key_hash', { length: 64 }).notNull().unique(),
