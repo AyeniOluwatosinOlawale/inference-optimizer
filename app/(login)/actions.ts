@@ -25,7 +25,7 @@ import {
   validatedAction,
   validatedActionWithUser
 } from '@/lib/auth/middleware';
-import { sendWelcomeEmail, sendInvitationEmail } from '@/lib/email';
+import { sendWelcomeEmail, sendInvitationEmail, sendVerificationEmail } from '@/lib/email';
 
 async function logActivity(
   teamId: number | null | undefined,
@@ -212,6 +212,15 @@ export const signUp = validatedAction(signUpSchema, async (data, formData) => {
     logActivity(teamId, createdUser.id, ActivityType.SIGN_UP),
     setSession(createdUser),
     sendWelcomeEmail(createdUser.email, createdUser.name ?? undefined).catch(() => {}),
+    // Send email verification (fire-and-forget)
+    (async () => {
+      const { randomBytes } = await import('crypto');
+      const token = randomBytes(32).toString('hex');
+      const expiresAt = new Date(Date.now() + 1000 * 60 * 60 * 24); // 24h
+      const { emailVerifications } = await import('@/lib/db/schema');
+      await db.insert(emailVerifications).values({ userId: createdUser.id, token, expiresAt });
+      await sendVerificationEmail(createdUser.email, token);
+    })().catch(() => {}),
   ]);
 
   const redirectTo = formData.get('redirect') as string | null;

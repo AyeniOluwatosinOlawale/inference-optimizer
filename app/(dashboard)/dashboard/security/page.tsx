@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Lock, Trash2, Loader2 } from 'lucide-react';
+import { BackButton } from '@/components/back-button';
 import { useActionState } from 'react';
 import { updatePassword, deleteAccount } from '@/app/(login)/actions';
 
@@ -35,6 +36,7 @@ export default function SecurityPage() {
 
   return (
     <section className="flex-1 p-4 lg:p-8">
+      <BackButton fallback="/dashboard" />
       <h1 className="text-lg lg:text-2xl font-medium bold text-gray-900 mb-6">
         Security Settings
       </h1>

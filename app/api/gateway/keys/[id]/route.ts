@@ -14,10 +14,15 @@ export async function DELETE(
   if (!row?.teamId) return NextResponse.json({ error: 'No team' }, { status: 401 });
 
   const { id } = await params;
+  const keyId = Number(id);
+  if (!Number.isInteger(keyId) || keyId <= 0 || keyId > Number.MAX_SAFE_INTEGER) {
+    return NextResponse.json({ error: 'Invalid id' }, { status: 400 });
+  }
+
   await db
     .update(gatewayApiKeys)
     .set({ revokedAt: new Date() })
-    .where(and(eq(gatewayApiKeys.id, parseInt(id)), eq(gatewayApiKeys.teamId, row.teamId)));
+    .where(and(eq(gatewayApiKeys.id, keyId), eq(gatewayApiKeys.teamId, row.teamId)));
 
   return NextResponse.json({ ok: true });
 }

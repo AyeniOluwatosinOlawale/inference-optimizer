@@ -16,8 +16,10 @@ export async function DELETE(
   if (!teamId) return NextResponse.json({ error: 'No team' }, { status: 401 });
 
   const { id } = await params;
-  const keyId = parseInt(id, 10);
-  if (isNaN(keyId)) return NextResponse.json({ error: 'Invalid id' }, { status: 400 });
+  const keyId = Number(id);
+  if (!Number.isInteger(keyId) || keyId <= 0 || keyId > Number.MAX_SAFE_INTEGER) {
+    return NextResponse.json({ error: 'Invalid id' }, { status: 400 });
+  }
 
   const result = await db
     .delete(providerKeys)

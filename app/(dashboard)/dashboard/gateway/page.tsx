@@ -4,14 +4,20 @@ import { useState } from 'react';
 import useSWR from 'swr';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Key, TrendingUp, Zap, Activity, Plus, X, Trash2, Copy, Check, Eye, EyeOff } from 'lucide-react';
+import { BackButton } from '@/components/back-button';
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
 } from 'recharts';
 
 const fetcher = (url: string) => fetch(url).then(r => r.json());
 
-const fmt$ = (n: number) =>
-  n >= 1 ? `$${n.toFixed(2)}` : n >= 0.01 ? `$${(n * 100).toFixed(1)}¢` : `$${(n * 1_000_000).toFixed(0)}µ`;
+const fmt$ = (v: number | string) => {
+  const n = Number(v);
+  if (isNaN(n)) return '$0.0000';
+  if (n >= 1) return `$${n.toFixed(2)}`;
+  if (n >= 0.0001) return `$${n.toFixed(4)}`;
+  return `$${n.toFixed(6)}`;
+};
 
 const fmtPct = (n: number) => `${n.toFixed(1)}%`;
 
@@ -583,6 +589,7 @@ export default function GatewayPage() {
     <div className="p-4 md:p-6 lg:p-8 space-y-6">
 
       {/* Header */}
+      <BackButton fallback="/dashboard" />
       <motion.div
         initial={{ opacity: 0, y: -12 }}
         animate={{ opacity: 1, y: 0 }}
