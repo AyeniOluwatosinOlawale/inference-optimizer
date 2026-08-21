@@ -31,17 +31,9 @@ function UserMenu() {
 
   if (!user) {
     return (
-      <>
-        <Link
-          href="/pricing"
-          className="hidden md:inline text-sm font-medium text-gray-700 hover:text-gray-900"
-        >
-          Pricing
-        </Link>
-        <Button asChild className="rounded-full text-sm px-4 py-2">
-          <Link href="/sign-up">Sign Up</Link>
-        </Button>
-      </>
+      <Button asChild className="rounded-full text-sm px-4 py-2">
+        <Link href="/sign-up">Sign Up</Link>
+      </Button>
     );
   }
 
