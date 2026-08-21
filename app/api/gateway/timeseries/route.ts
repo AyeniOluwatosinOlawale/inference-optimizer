@@ -25,10 +25,15 @@ export async function GET(req: NextRequest) {
     .from(gatewayRequests)
     .where(and(or(eq(gatewayRequests.teamId, teamId), isNull(gatewayRequests.teamId)), gte(gatewayRequests.createdAt, since)));
 
-  // Group by date
+  // Group by UK date (Europe/London — BST/GMT)
   const byDate: Record<string, { cost: number; baseline: number; savings: number; requests: number }> = {};
+  const ukDateFmt = new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/London', year: 'numeric', month: '2-digit', day: '2-digit' });
   for (const r of rows) {
-    const date = r.createdAt.toISOString().slice(0, 10);
+    const parts = ukDateFmt.formatToParts(r.createdAt);
+    const y = parts.find(p => p.type === 'year')!.value;
+    const m = parts.find(p => p.type === 'month')!.value;
+    const d = parts.find(p => p.type === 'day')!.value;
+    const date = `${y}-${m}-${d}`;
     if (!byDate[date]) byDate[date] = { cost: 0, baseline: 0, savings: 0, requests: 0 };
     byDate[date].cost += parseFloat(String(r.costUsd));
     byDate[date].baseline += parseFloat(String(r.baselineCostUsd));
