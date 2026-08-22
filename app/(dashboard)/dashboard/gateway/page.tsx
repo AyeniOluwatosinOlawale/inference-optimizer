@@ -1290,87 +1290,117 @@ export default function GatewayPage() {
         </div>
       </motion.div>
 
-      {/* ── Section: Analytics ───────────────────────────────────────────────── */}
-      <section className="space-y-5">
-        <p className="text-[11px] font-semibold uppercase tracking-widest text-gray-400">Analytics</p>
-
-        {/* KPI Cards */}
-        {loading ? (
+      {/* ── Analytics + Requests: gated on having data ───────────────────────── */}
+      {loading ? (
+        <section className="space-y-5">
+          <p className="text-[11px] font-semibold uppercase tracking-widest text-gray-400">Analytics</p>
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             {[...Array(4)].map((_, i) => (
               <div key={i} className="bg-white border border-gray-100 rounded-2xl p-5 h-24 animate-pulse" />
             ))}
           </div>
-        ) : (
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            <KpiCard label="Total Saved" value={summary ? fmt$(summary.total_savings_usd) : '—'}
-              sub={`vs ${summary ? fmt$(summary.total_baseline_usd) : '$0'} baseline`}
-              icon={TrendingUp} color="bg-emerald-50 text-emerald-600" delay={0.05} />
-            <KpiCard label="Savings Rate" value={summary ? fmtPct(summary.savings_pct) : '—'}
-              sub="of baseline cost recovered"
-              icon={Zap} color="bg-blue-50 text-blue-600" delay={0.1} />
-            <KpiCard label="Cache Hit Rate" value={summary ? fmtPct(summary.cache_hit_rate) : '—'}
-              sub="requests served free"
-              icon={Key} color="bg-violet-50 text-violet-600" delay={0.15} />
-            <KpiCard label="Requests" value={summary ? summary.total_requests.toLocaleString() : '—'}
-              sub={`avg ${summary?.avg_ttft_ms ?? '—'}ms TTFT`}
-              icon={Activity} color="bg-amber-50 text-amber-600" delay={0.2} />
-          </div>
-        )}
-
-        {/* Savings Story — hero comparison */}
-        <SavingsStory summary={summary} loading={loadingSummary} />
-
-        {/* Cost vs Baseline chart */}
-        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.22, duration: 0.4 }}
-          className="bg-white border border-gray-100 rounded-2xl shadow-sm p-6">
-          <div className="flex items-start justify-between flex-wrap gap-2 mb-5">
-            <div>
-              <h2 className="text-base font-semibold text-gray-900">Cost vs Baseline</h2>
-              <p className="text-xs text-gray-400 mt-0.5">Grey = what you would have paid · Green = what you actually paid</p>
-            </div>
-          </div>
-          <CostChart days={days} />
-        </motion.div>
-
-        {/* Model Distribution + Optimization Breakdown (equal columns) */}
-        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.28, duration: 0.4 }}
-          className="grid grid-cols-1 md:grid-cols-2 gap-5">
-          <div className="bg-white border border-gray-100 rounded-2xl shadow-sm p-6">
-            <h2 className="text-base font-semibold text-gray-900">Model Distribution</h2>
-            <p className="text-xs text-gray-400 mt-0.5 mb-5">Which models actually served your requests</p>
-            <ModelDonut distribution={summary?.model_distribution ?? {}} />
-          </div>
-          <div className="bg-white border border-gray-100 rounded-2xl shadow-sm p-6">
-            <h2 className="text-base font-semibold text-gray-900">Savings by Optimization</h2>
-            <p className="text-xs text-gray-400 mt-0.5 mb-5">Where the savings came from</p>
-            <OptBreakdown breakdown={summary?.optimization_breakdown ?? {}} />
-          </div>
-        </motion.div>
-      </section>
-
-      {/* ── Section: Request Log ─────────────────────────────────────────────── */}
-      <section className="space-y-3">
-        <p className="text-[11px] font-semibold uppercase tracking-widest text-gray-400">Live Requests</p>
-        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.34, duration: 0.4 }}
-          className="bg-white border border-gray-100 rounded-2xl shadow-sm overflow-hidden"
+        </section>
+      ) : !summary || summary.total_requests === 0 ? (
+        /* ── Empty state — new user, no traffic yet ─────────────────────────── */
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
+          className="bg-white border border-gray-100 rounded-2xl shadow-sm px-8 py-16 flex flex-col items-center text-center gap-4"
         >
-          <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
-            <div>
-              <h2 className="text-base font-semibold text-gray-900">Request Log</h2>
-              <p className="text-xs text-gray-400 mt-0.5">Grouped by day · click to expand · new requests appear instantly</p>
-            </div>
-            <span className="flex items-center gap-1.5 text-xs text-emerald-500 font-medium">
-              <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
-              </span>
-              Streaming live
-            </span>
+          <div className="w-14 h-14 rounded-2xl bg-emerald-50 flex items-center justify-center">
+            <TrendingUp className="w-7 h-7 text-emerald-500" />
           </div>
-          <DayGroupedLog requests={requests} loading={loading} flashIds={flashIds} />
+          <div>
+            <h2 className="text-lg font-semibold text-gray-900">No requests yet</h2>
+            <p className="text-sm text-gray-400 mt-1.5 max-w-sm">
+              Send your first request through the gateway and your savings, model routing, and latency data will appear here in real time.
+            </p>
+          </div>
+          <div className="flex items-center gap-2 mt-2">
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+            </span>
+            <span className="text-xs text-emerald-600 font-medium">Listening for traffic — set up your key below</span>
+          </div>
         </motion.div>
-      </section>
+      ) : (
+        <>
+          {/* ── Section: Analytics ─────────────────────────────────────────────── */}
+          <section className="space-y-5">
+            <p className="text-[11px] font-semibold uppercase tracking-widest text-gray-400">Analytics</p>
+
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+              <KpiCard label="Total Saved" value={fmt$(summary.total_savings_usd)}
+                sub={`vs ${fmt$(summary.total_baseline_usd)} baseline`}
+                icon={TrendingUp} color="bg-emerald-50 text-emerald-600" delay={0.05} />
+              <KpiCard label="Savings Rate" value={fmtPct(summary.savings_pct)}
+                sub="of baseline cost recovered"
+                icon={Zap} color="bg-blue-50 text-blue-600" delay={0.1} />
+              <KpiCard label="Cache Hit Rate" value={fmtPct(summary.cache_hit_rate)}
+                sub="requests served free"
+                icon={Key} color="bg-violet-50 text-violet-600" delay={0.15} />
+              <KpiCard label="Requests" value={summary.total_requests.toLocaleString()}
+                sub={`avg ${summary.avg_ttft_ms ?? '—'}ms TTFT`}
+                icon={Activity} color="bg-amber-50 text-amber-600" delay={0.2} />
+            </div>
+
+            {/* Savings Story */}
+            <SavingsStory summary={summary} loading={false} />
+
+            {/* Cost vs Baseline chart */}
+            <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.22, duration: 0.4 }}
+              className="bg-white border border-gray-100 rounded-2xl shadow-sm p-6">
+              <div className="flex items-start justify-between flex-wrap gap-2 mb-5">
+                <div>
+                  <h2 className="text-base font-semibold text-gray-900">Cost vs Baseline</h2>
+                  <p className="text-xs text-gray-400 mt-0.5">Grey = what you would have paid · Green = what you actually paid</p>
+                </div>
+              </div>
+              <CostChart days={days} />
+            </motion.div>
+
+            {/* Model Distribution + Optimization Breakdown */}
+            <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.28, duration: 0.4 }}
+              className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              <div className="bg-white border border-gray-100 rounded-2xl shadow-sm p-6">
+                <h2 className="text-base font-semibold text-gray-900">Model Distribution</h2>
+                <p className="text-xs text-gray-400 mt-0.5 mb-5">Which models actually served your requests</p>
+                <ModelDonut distribution={summary.model_distribution ?? {}} />
+              </div>
+              <div className="bg-white border border-gray-100 rounded-2xl shadow-sm p-6">
+                <h2 className="text-base font-semibold text-gray-900">Savings by Optimization</h2>
+                <p className="text-xs text-gray-400 mt-0.5 mb-5">Where the savings came from</p>
+                <OptBreakdown breakdown={summary.optimization_breakdown ?? {}} />
+              </div>
+            </motion.div>
+          </section>
+
+          {/* ── Section: Request Log ────────────────────────────────────────────── */}
+          <section className="space-y-3">
+            <p className="text-[11px] font-semibold uppercase tracking-widest text-gray-400">Live Requests</p>
+            <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.34, duration: 0.4 }}
+              className="bg-white border border-gray-100 rounded-2xl shadow-sm overflow-hidden"
+            >
+              <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+                <div>
+                  <h2 className="text-base font-semibold text-gray-900">Request Log</h2>
+                  <p className="text-xs text-gray-400 mt-0.5">Grouped by day · click to expand · new requests appear instantly</p>
+                </div>
+                <span className="flex items-center gap-1.5 text-xs text-emerald-500 font-medium">
+                  <span className="relative flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+                  </span>
+                  Streaming live
+                </span>
+              </div>
+              <DayGroupedLog requests={requests} loading={false} flashIds={flashIds} />
+            </motion.div>
+          </section>
+        </>
+      )}
 
       {/* ── Section: Configuration ───────────────────────────────────────────── */}
       <section className="space-y-5">
