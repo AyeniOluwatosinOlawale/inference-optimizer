@@ -20,6 +20,7 @@ export async function GET() {
     id: k.id,
     keyPrefix: k.keyPrefix,
     name: k.name,
+    dailySpendLimitUsd: k.dailySpendLimitUsd ? parseFloat(String(k.dailySpendLimitUsd)) : null,
     createdAt: k.createdAt,
   })));
 }

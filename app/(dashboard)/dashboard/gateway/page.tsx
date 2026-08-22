@@ -7,6 +7,7 @@ import { Key, TrendingUp, Zap, Activity, Plus, X, Trash2, Copy, Check, Eye, EyeO
 import { BackButton } from '@/components/back-button';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
+  PieChart, Pie, Cell,
 } from 'recharts';
 
 const fetcher = (url: string) => fetch(url).then(r => r.json());
@@ -119,6 +120,96 @@ function CostChart({ days }: { days: number }) {
   );
 }
 
+const MODEL_COLORS: Record<string, string> = {
+  'claude-haiku-4-5':         '#10b981',
+  'claude-sonnet-4-6':        '#3b82f6',
+  'claude-opus-4-7':          '#8b5cf6',
+  'gpt-4o-mini':              '#f59e0b',
+  'gpt-4o':                   '#f97316',
+  'gemini-2.0-flash':         '#06b6d4',
+  'gemini-2.5-pro':           '#0ea5e9',
+  'llama-3.1-8b-instant':     '#ec4899',
+  'llama-3.3-70b-versatile':  '#d946ef',
+};
+const FALLBACK_COLORS = ['#6366f1','#14b8a6','#f43f5e','#84cc16','#fb923c'];
+
+function ModelDonut({ distribution }: { distribution: Record<string, number> }) {
+  const total = Object.values(distribution).reduce((a, b) => a + b, 0);
+  if (total === 0) return <div className="h-40 flex items-center justify-center text-xs text-gray-400">No data yet</div>;
+
+  const entries = Object.entries(distribution).sort(([, a], [, b]) => b - a);
+  const data = entries.map(([model, count]) => ({
+    name: MODEL_SHORT[model] ?? model,
+    value: count,
+    pct: ((count / total) * 100).toFixed(1),
+  }));
+
+  return (
+    <div className="flex items-center gap-6">
+      <ResponsiveContainer width={130} height={130}>
+        <PieChart>
+          <Pie data={data} cx="50%" cy="50%" innerRadius={38} outerRadius={58}
+            dataKey="value" paddingAngle={2} strokeWidth={0}>
+            {entries.map(([model], i) => (
+              <Cell key={model} fill={MODEL_COLORS[model] ?? FALLBACK_COLORS[i % FALLBACK_COLORS.length]} />
+            ))}
+          </Pie>
+          <Tooltip
+            contentStyle={{ fontSize: 11, borderRadius: 6, border: '1px solid #e5e7eb' }}
+            formatter={(v: any, _: any, p: any) => [`${p.payload.pct}% (${v} req)`, p.payload.name]}
+          />
+        </PieChart>
+      </ResponsiveContainer>
+      <ul className="flex-1 space-y-1.5 min-w-0">
+        {entries.slice(0, 6).map(([model, count], i) => (
+          <li key={model} className="flex items-center gap-2 text-xs">
+            <span className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+              style={{ background: MODEL_COLORS[model] ?? FALLBACK_COLORS[i % FALLBACK_COLORS.length] }} />
+            <span className="text-gray-600 truncate flex-1">{MODEL_SHORT[model] ?? model}</span>
+            <span className="text-gray-400">{((count / total) * 100).toFixed(0)}%</span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+const OPT_LABELS: Record<string, string> = {
+  routing:        'Smart Routing',
+  prompt_caching: 'Prompt Cache',
+  coalescing:     'Dedup/Coalesce',
+  fallback:       'Fallback',
+  early_stopping: 'Early Stop',
+};
+
+function OptBreakdown({ breakdown }: { breakdown: Record<string, { count: number; savings: number }> }) {
+  const rows = Object.entries(breakdown).sort(([, a], [, b]) => b.savings - a.savings);
+  if (rows.length === 0) return <div className="text-xs text-gray-400 py-4 text-center">No optimizations logged yet</div>;
+  return (
+    <table className="w-full text-xs">
+      <thead>
+        <tr className="text-gray-400 uppercase tracking-wide border-b border-gray-100">
+          <th className="text-left pb-2 font-medium">Optimization</th>
+          <th className="text-right pb-2 font-medium">Requests</th>
+          <th className="text-right pb-2 font-medium">Saved</th>
+        </tr>
+      </thead>
+      <tbody>
+        {rows.map(([opt, { count, savings }]) => (
+          <tr key={opt} className="border-b border-gray-50">
+            <td className="py-2">
+              <OptPill label={opt} />
+              <span className="ml-2 text-gray-500">{OPT_LABELS[opt] ?? opt}</span>
+            </td>
+            <td className="py-2 text-right text-gray-600">{count.toLocaleString()}</td>
+            <td className="py-2 text-right font-semibold text-emerald-600">+{fmt$(savings)}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  );
+}
+
 function GatewayKeysPanel({
   newKey, setNewKey,
 }: {
@@ -132,6 +223,19 @@ function GatewayKeysPanel({
   const [copied, setCopied] = useState(false);
   const [showKey, setShowKey] = useState(false);
   const [revoking, setRevoking] = useState<number | null>(null);
+  const [editingCapId, setEditingCapId] = useState<number | null>(null);
+  const [capInput, setCapInput] = useState('');
+
+  const handleSaveCap = async (id: number) => {
+    const val = capInput.trim();
+    await fetch(`/api/gateway/keys/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ daily_spend_limit_usd: val === '' ? null : parseFloat(val) }),
+    });
+    setEditingCapId(null);
+    mutate();
+  };
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -266,6 +370,34 @@ function GatewayKeysPanel({
                   <span className="text-sm font-medium text-gray-800">{k.name ?? 'Unnamed key'}</span>
                 </div>
                 <p className="text-xs text-gray-400 font-mono mt-0.5">{k.keyPrefix}{'•'.repeat(12)}</p>
+              </div>
+              <div className="flex items-center gap-1 text-xs">
+                {editingCapId === k.id ? (
+                  <>
+                    <span className="text-gray-400">$</span>
+                    <input
+                      autoFocus
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      placeholder="e.g. 5.00"
+                      value={capInput}
+                      onChange={e => setCapInput(e.target.value)}
+                      onKeyDown={e => { if (e.key === 'Enter') handleSaveCap(k.id); if (e.key === 'Escape') setEditingCapId(null); }}
+                      className="w-20 border border-gray-200 rounded px-1.5 py-0.5 text-xs focus:outline-none focus:ring-1 focus:ring-gray-900/10"
+                    />
+                    <button onClick={() => handleSaveCap(k.id)} className="text-emerald-600 hover:text-emerald-800 font-medium px-1">Save</button>
+                    <button onClick={() => setEditingCapId(null)} className="text-gray-400 hover:text-gray-600">✕</button>
+                  </>
+                ) : (
+                  <button
+                    onClick={() => { setEditingCapId(k.id); setCapInput(k.dailySpendLimitUsd != null ? String(k.dailySpendLimitUsd) : ''); }}
+                    className="text-gray-400 hover:text-gray-700 whitespace-nowrap"
+                    title="Set daily spend cap"
+                  >
+                    {k.dailySpendLimitUsd != null ? `Cap $${k.dailySpendLimitUsd}/day` : 'No cap'}
+                  </button>
+                )}
               </div>
               <span className="text-xs text-gray-300 whitespace-nowrap hidden sm:block">
                 {new Date(k.createdAt).toLocaleDateString()}
@@ -778,11 +910,30 @@ export default function GatewayPage() {
         <CostChart days={days} />
       </motion.div>
 
-      {/* Gateway Keys + Provider Keys */}
+      {/* Model Distribution + Optimization Breakdown */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.28, duration: 0.45 }}
+        className="grid grid-cols-1 md:grid-cols-2 gap-4"
+      >
+        <div className="bg-white border border-gray-100 rounded-2xl shadow-sm p-6">
+          <h2 className="text-base font-semibold text-gray-900 mb-1">Model Distribution</h2>
+          <p className="text-xs text-gray-400 mb-4">Which models actually served your requests</p>
+          <ModelDonut distribution={summary?.model_distribution ?? {}} />
+        </div>
+        <div className="bg-white border border-gray-100 rounded-2xl shadow-sm p-6">
+          <h2 className="text-base font-semibold text-gray-900 mb-1">Top Optimizations</h2>
+          <p className="text-xs text-gray-400 mb-4">Where the savings came from</p>
+          <OptBreakdown breakdown={summary?.optimization_breakdown ?? {}} />
+        </div>
+      </motion.div>
+
+      {/* Gateway Keys + Provider Keys */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.33, duration: 0.45 }}
       >
         <GatewayKeysPanel newKey={newKey} setNewKey={setNewKey} />
       </motion.div>
@@ -790,7 +941,7 @@ export default function GatewayPage() {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.33, duration: 0.45 }}
+        transition={{ delay: 0.38, duration: 0.45 }}
       >
         <ProviderKeysPanel />
       </motion.div>
