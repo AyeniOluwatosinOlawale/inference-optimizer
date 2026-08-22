@@ -116,6 +116,7 @@ export const gatewayApiKeys = pgTable('iw_gateway_api_keys', {
   keyPrefix: varchar('key_prefix', { length: 10 }).notNull(),
   name: varchar('name', { length: 100 }),
   dailySpendLimitUsd: numeric('daily_spend_limit_usd', { precision: 10, scale: 4 }),
+  capAlertSentAt: timestamp('cap_alert_sent_at'),
   createdAt: timestamp('created_at').notNull().defaultNow(),
   revokedAt: timestamp('revoked_at'),
 });
