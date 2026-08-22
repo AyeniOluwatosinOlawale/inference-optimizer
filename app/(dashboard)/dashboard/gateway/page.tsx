@@ -1022,11 +1022,12 @@ const PROVIDER_SNIPPET_CONFIG: Record<string, {
   providerParam: string;
   routesTo: string;
 }> = {
-  anthropic:    { label: 'Claude',      icon: '🟤', model: 'claude-opus-4-7',         providerParam: 'anthropic',    routesTo: 'claude-haiku-4-5' },
-  openai:       { label: 'OpenAI',      icon: '🟢', model: 'gpt-4o',                  providerParam: 'openai',       routesTo: 'gpt-4o-mini' },
-  gemini:       { label: 'Gemini',      icon: '🔵', model: 'gemini-1.5-pro',          providerParam: 'gemini',       routesTo: 'gemini-1.5-flash' },
-  groq:         { label: 'Groq',        icon: '🟣', model: 'llama-3.1-70b-versatile', providerParam: 'groq',         routesTo: 'llama-3.1-8b-instant' },
-  openrouter:   { label: 'OpenRouter',  icon: '🔶', model: 'openai/gpt-4o',           providerParam: 'openai-compat', routesTo: 'openai/gpt-4o-mini' },
+  anthropic:       { label: 'Claude',        icon: '🟤', model: 'claude-opus-4-7',         providerParam: 'anthropic',    routesTo: 'claude-haiku-4-5' },
+  openai:          { label: 'OpenAI',        icon: '🟢', model: 'gpt-4o',                  providerParam: 'openai',       routesTo: 'gpt-4o-mini' },
+  gemini:          { label: 'Gemini',        icon: '🔵', model: 'gemini-1.5-pro',          providerParam: 'gemini',       routesTo: 'gemini-1.5-flash' },
+  groq:            { label: 'Groq',          icon: '🟣', model: 'llama-3.1-70b-versatile', providerParam: 'groq',         routesTo: 'llama-3.1-8b-instant' },
+  openrouter:      { label: 'OpenRouter',    icon: '🔶', model: 'openai/gpt-4o',           providerParam: 'openai-compat', routesTo: 'openai/gpt-4o-mini' },
+  'openai-compat': { label: 'OpenAI-compat', icon: '⚙️', model: 'your-model-name',         providerParam: 'openai-compat', routesTo: 'same model' },
 };
 
 type BaseTab = 'typescript' | 'curl';
@@ -1141,18 +1142,18 @@ function QuickStart({ apiKey, hasKeys, activeProviders, previewProvider }: {
   const focusProvider = previewProvider ?? undefined;
   const snippets = buildSnippets(key, activeProviders.length > 0 ? activeProviders : ['anthropic'], focusProvider);
   const tabKeys = Object.keys(snippets) as AnyTab[];
-  const [tab, setTab] = useState<AnyTab>(tabKeys[0]);
+  const [manualTab, setManualTab] = useState<AnyTab | null>(null);
   const [copied, setCopied] = useState(false);
 
-  // Auto-switch tab when user picks a provider in the form
-  useEffect(() => {
-    if (!previewProvider) return;
-    const target = previewProvider === 'anthropic' ? 'py-anthropic-sdk' : `py-${previewProvider}`;
-    if (tabKeys.includes(target)) setTab(target);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [previewProvider]);
-
-  const currentTab = tabKeys.includes(tab) ? tab : tabKeys[0];
+  // Derive active tab: previewProvider wins, then manual pick, then first tab
+  const currentTab = (() => {
+    if (previewProvider) {
+      const target = previewProvider === 'anthropic' ? 'py-anthropic-sdk' : `py-${previewProvider}`;
+      if (tabKeys.includes(target)) return target;
+    }
+    if (manualTab && tabKeys.includes(manualTab)) return manualTab;
+    return tabKeys[0];
+  })();
 
   const handleCopy = async () => {
     await navigator.clipboard.writeText(snippets[currentTab].code);
@@ -1182,7 +1183,7 @@ function QuickStart({ apiKey, hasKeys, activeProviders, previewProvider }: {
           {tabKeys.map(t => (
             <button
               key={t}
-              onClick={() => setTab(t)}
+              onClick={() => setManualTab(t)}
               className={`text-xs px-3 py-1.5 rounded-md font-medium transition-all ${
                 currentTab === t ? 'bg-white shadow text-gray-900' : 'text-gray-500 hover:text-gray-700'
               }`}
