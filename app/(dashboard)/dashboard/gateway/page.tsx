@@ -816,7 +816,7 @@ export default function GatewayPage() {
                 <th className="px-6 py-3 text-right font-medium">Cost</th>
                 <th className="px-6 py-3 text-right font-medium">Saved</th>
                 <th className="px-6 py-3 text-left font-medium">Optimizations</th>
-                <th className="px-6 py-3 text-right font-medium">Latency</th>
+                <th className="px-6 py-3 text-right font-medium">Latency / Speed</th>
               </tr>
             </thead>
             <tbody>
@@ -848,6 +848,12 @@ export default function GatewayPage() {
                     if (typeof raw === 'string') { try { return JSON.parse(raw); } catch { return []; } }
                     return raw;
                   })();
+                  const ttft = r.ttftMs ?? r.ttft_ms ?? 0;
+                  const total = r.totalMs ?? r.total_ms ?? 0;
+                  const outTok = r.outputTokens ?? r.output_tokens ?? 0;
+                  const decodeMs = total - ttft;
+                  const tpot = decodeMs > 0 && outTok > 0 ? decodeMs / outTok : null;
+                  const throughput = decodeMs > 0 && outTok > 0 ? (outTok / decodeMs) * 1000 : null;
                   return (
                     <motion.tr
                       key={r.id}
@@ -891,12 +897,14 @@ export default function GatewayPage() {
                           {opts.map((o: string) => <OptPill key={o} label={o} />)}
                         </div>
                       </td>
-                      <td className="px-6 py-3 text-right text-xs text-gray-500">
-                        {r.ttftMs ?? r.ttft_ms
-                          ? `${r.ttftMs ?? r.ttft_ms}ms`
-                          : r.totalMs ?? r.total_ms
-                          ? `${r.totalMs ?? r.total_ms}ms`
-                          : '—'}
+                      <td className="px-6 py-3 text-right text-xs text-gray-500 whitespace-nowrap">
+                        <div>{ttft ? `${ttft}ms TTFT` : total ? `${total}ms` : '—'}</div>
+                        {tpot !== null && (
+                          <div className="text-gray-400">{tpot.toFixed(1)}ms/tok</div>
+                        )}
+                        {throughput !== null && (
+                          <div className="text-emerald-500 font-medium">{throughput.toFixed(1)} tok/s</div>
+                        )}
                       </td>
                     </motion.tr>
                   );
