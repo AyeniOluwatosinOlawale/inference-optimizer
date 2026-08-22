@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { eq, and, gte, sum, count, avg, or, isNull } from 'drizzle-orm';
+import { eq, and, gte, sum, count, avg } from 'drizzle-orm';
 import { db } from '@/lib/db/drizzle';
 import { gatewayRequests } from '@/lib/db/schema';
 import { getUser, getUserWithTeam } from '@/lib/db/queries';
@@ -24,7 +24,7 @@ export async function GET(req: NextRequest) {
       avgTtft: avg(gatewayRequests.ttftMs),
     })
     .from(gatewayRequests)
-    .where(and(or(eq(gatewayRequests.teamId, teamId), isNull(gatewayRequests.teamId)), gte(gatewayRequests.createdAt, since)));
+    .where(and(eq(gatewayRequests.teamId, teamId), gte(gatewayRequests.createdAt, since)));
 
   const allReqs = await db
     .select({
@@ -34,7 +34,7 @@ export async function GET(req: NextRequest) {
       savingsUsd: gatewayRequests.savingsUsd,
     })
     .from(gatewayRequests)
-    .where(and(or(eq(gatewayRequests.teamId, teamId), isNull(gatewayRequests.teamId)), gte(gatewayRequests.createdAt, since)));
+    .where(and(eq(gatewayRequests.teamId, teamId), gte(gatewayRequests.createdAt, since)));
 
   const modelDist: Record<string, number> = {};
   const optBreakdown: Record<string, { count: number; savings: number }> = {};

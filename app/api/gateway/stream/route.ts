@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server';
-import { and, desc, gt, isNull, or, eq } from 'drizzle-orm';
+import { and, desc, gt, eq } from 'drizzle-orm';
 import { db } from '@/lib/db/drizzle';
 import { gatewayRequests } from '@/lib/db/schema';
 import { getUser, getUserWithTeam } from '@/lib/db/queries';
@@ -37,7 +37,7 @@ export async function GET(req: NextRequest) {
             .select()
             .from(gatewayRequests)
             .where(and(
-              or(eq(gatewayRequests.teamId, teamId), isNull(gatewayRequests.teamId)),
+              eq(gatewayRequests.teamId, teamId),
               gt(gatewayRequests.id, currentLastId),
             ))
             .orderBy(desc(gatewayRequests.id))
