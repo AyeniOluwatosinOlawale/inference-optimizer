@@ -731,9 +731,9 @@ function QuickStart({ apiKey, hasKeys, activeProviders }: {
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
+      initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.45, duration: 0.45 }}
+      transition={{ delay: 0.5, duration: 0.4 }}
       className="bg-white border border-gray-100 rounded-2xl shadow-sm overflow-hidden"
     >
       <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between flex-wrap gap-3">
@@ -823,14 +823,14 @@ export default function GatewayPage() {
   const loading = loadingSummary || loadingReqs;
 
   return (
-    <div className="p-4 md:p-6 lg:p-8 space-y-6">
+    <div className="p-4 md:p-6 lg:p-8 space-y-8 max-w-screen-xl mx-auto">
 
-      {/* Header */}
+      {/* ── Header ───────────────────────────────────────────────────────────── */}
       <BackButton fallback="/dashboard" />
       <motion.div
         initial={{ opacity: 0, y: -12 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.35 }}
+        transition={{ duration: 0.3 }}
         className="flex items-center justify-between flex-wrap gap-3"
       >
         <div>
@@ -839,123 +839,86 @@ export default function GatewayPage() {
         </div>
         <div className="flex gap-1 bg-gray-100 rounded-lg p-1">
           {([7, 30, 90] as const).map(d => (
-            <button
-              key={d}
-              onClick={() => setDays(d)}
+            <button key={d} onClick={() => setDays(d)}
               className={`text-xs px-3 py-1.5 rounded-md font-medium transition-all ${
                 days === d ? 'bg-white shadow text-gray-900' : 'text-gray-500 hover:text-gray-700'
               }`}
-            >
-              {d}d
-            </button>
+            >{d}d</button>
           ))}
         </div>
       </motion.div>
 
-      {/* KPI Cards */}
-      {loading ? (
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          {[...Array(4)].map((_, i) => (
-            <div key={i} className="bg-white border border-gray-100 rounded-2xl p-5 h-24 animate-pulse" />
-          ))}
-        </div>
-      ) : (
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <KpiCard
-            label="Total Saved"
-            value={summary ? fmt$(summary.total_savings_usd) : '—'}
-            sub={`vs ${summary ? fmt$(summary.total_baseline_usd) : '$0'} baseline`}
-            icon={TrendingUp}
-            color="bg-emerald-50 text-emerald-600"
-            delay={0.05}
-          />
-          <KpiCard
-            label="Savings Rate"
-            value={summary ? fmtPct(summary.savings_pct) : '—'}
-            sub="of baseline cost recovered"
-            icon={Zap}
-            color="bg-blue-50 text-blue-600"
-            delay={0.1}
-          />
-          <KpiCard
-            label="Cache Hit Rate"
-            value={summary ? fmtPct(summary.cache_hit_rate) : '—'}
-            sub="requests served free"
-            icon={Key}
-            color="bg-violet-50 text-violet-600"
-            delay={0.15}
-          />
-          <KpiCard
-            label="Requests"
-            value={summary ? summary.total_requests.toLocaleString() : '—'}
-            sub={`avg ${summary?.avg_ttft_ms ?? '—'}ms TTFT`}
-            icon={Activity}
-            color="bg-amber-50 text-amber-600"
-            delay={0.2}
-          />
-        </div>
-      )}
+      {/* ── Section: Analytics ───────────────────────────────────────────────── */}
+      <section className="space-y-5">
+        <p className="text-[11px] font-semibold uppercase tracking-widest text-gray-400">Analytics</p>
 
-      {/* Cost Chart */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.22, duration: 0.45 }}
-        className="bg-white border border-gray-100 rounded-2xl shadow-sm p-6"
-      >
-        <div className="mb-4">
-          <h2 className="text-base font-semibold text-gray-900">Cost vs Baseline</h2>
-          <p className="text-xs text-gray-400 mt-0.5">The gap between the lines is money you kept</p>
-        </div>
-        <CostChart days={days} />
-      </motion.div>
+        {/* KPI Cards */}
+        {loading ? (
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            {[...Array(4)].map((_, i) => (
+              <div key={i} className="bg-white border border-gray-100 rounded-2xl p-5 h-24 animate-pulse" />
+            ))}
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <KpiCard label="Total Saved" value={summary ? fmt$(summary.total_savings_usd) : '—'}
+              sub={`vs ${summary ? fmt$(summary.total_baseline_usd) : '$0'} baseline`}
+              icon={TrendingUp} color="bg-emerald-50 text-emerald-600" delay={0.05} />
+            <KpiCard label="Savings Rate" value={summary ? fmtPct(summary.savings_pct) : '—'}
+              sub="of baseline cost recovered"
+              icon={Zap} color="bg-blue-50 text-blue-600" delay={0.1} />
+            <KpiCard label="Cache Hit Rate" value={summary ? fmtPct(summary.cache_hit_rate) : '—'}
+              sub="requests served free"
+              icon={Key} color="bg-violet-50 text-violet-600" delay={0.15} />
+            <KpiCard label="Requests" value={summary ? summary.total_requests.toLocaleString() : '—'}
+              sub={`avg ${summary?.avg_ttft_ms ?? '—'}ms TTFT`}
+              icon={Activity} color="bg-amber-50 text-amber-600" delay={0.2} />
+          </div>
+        )}
 
-      {/* Model Distribution + Optimization Breakdown */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.28, duration: 0.45 }}
-        className="grid grid-cols-1 md:grid-cols-2 gap-4"
-      >
-        <div className="bg-white border border-gray-100 rounded-2xl shadow-sm p-6">
-          <h2 className="text-base font-semibold text-gray-900 mb-1">Model Distribution</h2>
-          <p className="text-xs text-gray-400 mb-4">Which models actually served your requests</p>
-          <ModelDonut distribution={summary?.model_distribution ?? {}} />
-        </div>
-        <div className="bg-white border border-gray-100 rounded-2xl shadow-sm p-6">
-          <h2 className="text-base font-semibold text-gray-900 mb-1">Top Optimizations</h2>
-          <p className="text-xs text-gray-400 mb-4">Where the savings came from</p>
-          <OptBreakdown breakdown={summary?.optimization_breakdown ?? {}} />
-        </div>
-      </motion.div>
+        {/* Cost vs Baseline chart */}
+        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.22, duration: 0.4 }}
+          className="bg-white border border-gray-100 rounded-2xl shadow-sm p-6">
+          <div className="flex items-start justify-between flex-wrap gap-2 mb-5">
+            <div>
+              <h2 className="text-base font-semibold text-gray-900">Cost vs Baseline</h2>
+              <p className="text-xs text-gray-400 mt-0.5">Grey = what you would have paid · Green = what you actually paid</p>
+            </div>
+          </div>
+          <CostChart days={days} />
+        </motion.div>
 
-      {/* Gateway Keys + Provider Keys */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.33, duration: 0.45 }}
-      >
-        <GatewayKeysPanel newKey={newKey} setNewKey={setNewKey} />
-      </motion.div>
+        {/* Model Distribution + Optimization Breakdown (equal columns) */}
+        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.28, duration: 0.4 }}
+          className="grid grid-cols-1 md:grid-cols-2 gap-5">
+          <div className="bg-white border border-gray-100 rounded-2xl shadow-sm p-6">
+            <h2 className="text-base font-semibold text-gray-900">Model Distribution</h2>
+            <p className="text-xs text-gray-400 mt-0.5 mb-5">Which models actually served your requests</p>
+            <ModelDonut distribution={summary?.model_distribution ?? {}} />
+          </div>
+          <div className="bg-white border border-gray-100 rounded-2xl shadow-sm p-6">
+            <h2 className="text-base font-semibold text-gray-900">Savings by Optimization</h2>
+            <p className="text-xs text-gray-400 mt-0.5 mb-5">Where the savings came from</p>
+            <OptBreakdown breakdown={summary?.optimization_breakdown ?? {}} />
+          </div>
+        </motion.div>
+      </section>
 
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.38, duration: 0.45 }}
-      >
-        <ProviderKeysPanel />
-      </motion.div>
-
-      {/* Request Log */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.4, duration: 0.45 }}
-        className="bg-white border border-gray-100 rounded-2xl shadow-sm overflow-hidden"
-      >
-        <div className="px-6 py-4 border-b border-gray-100">
-          <h2 className="text-base font-semibold text-gray-900">Request Log</h2>
-          <p className="text-xs text-gray-400 mt-0.5">Every request processed by the gateway</p>
+      {/* ── Section: Request Log ─────────────────────────────────────────────── */}
+      <section className="space-y-3">
+        <p className="text-[11px] font-semibold uppercase tracking-widest text-gray-400">Live Requests</p>
+        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.34, duration: 0.4 }}
+          className="bg-white border border-gray-100 rounded-2xl shadow-sm overflow-hidden"
+        >
+        <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+          <div>
+            <h2 className="text-base font-semibold text-gray-900">Request Log</h2>
+            <p className="text-xs text-gray-400 mt-0.5">Every request processed by the gateway · refreshes every 30s</p>
+          </div>
+          <span className="flex items-center gap-1.5 text-xs text-gray-400">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+            Live
+          </span>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-sm min-w-[600px]">
@@ -1064,10 +1027,24 @@ export default function GatewayPage() {
             </tbody>
           </table>
         </div>
-      </motion.div>
+        </motion.div>
+      </section>
 
-      {/* Quick Start — always visible */}
-      <QuickStart apiKey={activeKey} hasKeys={gatewayKeys.length > 0} activeProviders={activeProviders} />
+      {/* ── Section: Configuration ───────────────────────────────────────────── */}
+      <section className="space-y-5">
+        <p className="text-[11px] font-semibold uppercase tracking-widest text-gray-400">Configuration</p>
+
+        {/* Gateway Keys + Provider Keys side by side on large screens */}
+        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.42, duration: 0.4 }}
+          className="grid grid-cols-1 xl:grid-cols-2 gap-5">
+          <GatewayKeysPanel newKey={newKey} setNewKey={setNewKey} />
+          <ProviderKeysPanel />
+        </motion.div>
+
+        {/* Quick Start */}
+        <QuickStart apiKey={activeKey} hasKeys={gatewayKeys.length > 0} activeProviders={activeProviders} />
+      </section>
+
     </div>
   );
 }
