@@ -1,9 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import useSWR from 'swr';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Key, TrendingUp, Zap, Activity, Plus, X, Trash2, Copy, Check, Eye, EyeOff } from 'lucide-react';
+import { Key, TrendingUp, Zap, Activity, Plus, X, Trash2, Copy, Check, Eye, EyeOff, ArrowRight } from 'lucide-react';
 import { BackButton } from '@/components/back-button';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
@@ -11,6 +11,50 @@ import {
 } from 'recharts';
 
 const fetcher = (url: string) => fetch(url).then(r => r.json());
+
+// ── Real-time SSE hook ────────────────────────────────────────────────────────
+function useRealtimeRequests(initialLastId: number) {
+  const [liveRows, setLiveRows] = useState<any[]>([]);
+  const [flashIds, setFlashIds] = useState<Set<number>>(new Set());
+  const lastIdRef = useRef(initialLastId);
+  const esRef = useRef<EventSource | null>(null);
+
+  const connect = useCallback(() => {
+    if (esRef.current) esRef.current.close();
+    const es = new EventSource(`/api/gateway/stream?last_id=${lastIdRef.current}`);
+    esRef.current = es;
+
+    es.onmessage = (e) => {
+      try {
+        const rows: any[] = JSON.parse(e.data);
+        if (!rows.length) return;
+        lastIdRef.current = Math.max(lastIdRef.current, ...rows.map(r => r.id));
+        setLiveRows(prev => {
+          const seen = new Set(prev.map((r: any) => r.id));
+          const fresh = rows.filter(r => !seen.has(r.id));
+          return fresh.length ? [...fresh.reverse(), ...prev] : prev;
+        });
+        setFlashIds(prev => {
+          const next = new Set([...prev, ...rows.map(r => r.id)]);
+          setTimeout(() => setFlashIds(p => { const s = new Set(p); rows.forEach(r => s.delete(r.id)); return s; }), 1800);
+          return next;
+        });
+      } catch { /* ignore parse errors */ }
+    };
+
+    es.onerror = () => {
+      es.close();
+      setTimeout(connect, 1500);
+    };
+  }, []);
+
+  useEffect(() => {
+    connect();
+    return () => esRef.current?.close();
+  }, [connect]);
+
+  return { liveRows, flashIds };
+}
 
 const fmt$ = (v: number | string) => {
   const n = Number(v);
@@ -21,6 +65,58 @@ const fmt$ = (v: number | string) => {
 };
 
 const fmtPct = (n: number) => `${n.toFixed(1)}%`;
+
+// ── Savings Story — the hero comparison widget ────────────────────────────────
+function SavingsStory({ summary, loading }: { summary: any; loading: boolean }) {
+  if (loading) {
+    return (
+      <div className="bg-white border border-gray-100 rounded-2xl shadow-sm p-6 animate-pulse h-28" />
+    );
+  }
+  if (!summary || summary.total_requests === 0) return null;
+
+  const baseline = summary.total_baseline_usd as number;
+  const actual = summary.total_cost_usd as number;
+  const saved = summary.total_savings_usd as number;
+  const pct = summary.savings_pct as number;
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4 }}
+      className="bg-white border border-gray-100 rounded-2xl shadow-sm px-6 py-5 flex flex-col sm:flex-row items-center gap-6"
+    >
+      {/* Without optimizer */}
+      <div className="text-center sm:text-left">
+        <p className="text-[11px] font-semibold uppercase tracking-widest text-gray-400 mb-1">Without optimizer</p>
+        <p className="text-3xl font-mono font-bold text-gray-300 line-through decoration-gray-300">
+          {fmt$(baseline)}
+        </p>
+        <p className="text-xs text-gray-400 mt-1">What you would have paid</p>
+      </div>
+
+      <ArrowRight className="w-6 h-6 text-emerald-400 flex-shrink-0 hidden sm:block" />
+
+      {/* With optimizer */}
+      <div className="text-center sm:text-left">
+        <p className="text-[11px] font-semibold uppercase tracking-widest text-gray-400 mb-1">With optimizer</p>
+        <p className="text-3xl font-mono font-bold text-gray-900">{fmt$(actual)}</p>
+        <p className="text-xs text-gray-500 mt-1">What you actually paid</p>
+      </div>
+
+      {/* Divider */}
+      <div className="hidden sm:block h-12 w-px bg-gray-100 mx-2" />
+
+      {/* Savings badge — the hero number */}
+      <div className="sm:ml-auto text-center bg-emerald-50 border border-emerald-100 rounded-2xl px-8 py-4">
+        <p className="text-[11px] font-semibold uppercase tracking-widest text-emerald-500 mb-1">You saved</p>
+        <p className="text-4xl font-mono font-bold text-emerald-600 leading-none">{fmt$(saved)}</p>
+        <p className="text-sm font-semibold text-emerald-500 mt-1">{pct.toFixed(1)}% reduction</p>
+      </div>
+    </motion.div>
+  );
+}
 
 const PROVIDERS: Record<string, { label: string; icon: string }> = {
   anthropic:       { label: 'Anthropic', icon: '🟤' },
@@ -813,13 +909,23 @@ export default function GatewayPage() {
     { refreshInterval: 30000 }
   );
 
+  // Initial request history via SWR (no polling — SSE handles live updates)
   const { data: reqData, isLoading: loadingReqs } = useSWR(
     `/api/gateway/requests?limit=50`,
     fetcher,
-    { refreshInterval: 30000 }
   );
 
-  const requests: any[] = reqData?.data ?? [];
+  const historicRows: any[] = reqData?.data ?? [];
+  const initialLastId = historicRows.length > 0 ? (historicRows[0].id ?? 0) : 0;
+
+  // Real-time new rows via SSE
+  const { liveRows, flashIds } = useRealtimeRequests(initialLastId);
+
+  // Merge: live rows at the top (deduped against historic)
+  const historicIds = new Set(historicRows.map((r: any) => r.id));
+  const freshLive = liveRows.filter(r => !historicIds.has(r.id));
+  const requests = [...freshLive, ...historicRows];
+
   const loading = loadingSummary || loadingReqs;
 
   return (
@@ -876,6 +982,9 @@ export default function GatewayPage() {
           </div>
         )}
 
+        {/* Savings Story — hero comparison */}
+        <SavingsStory summary={summary} loading={loadingSummary} />
+
         {/* Cost vs Baseline chart */}
         <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.22, duration: 0.4 }}
           className="bg-white border border-gray-100 rounded-2xl shadow-sm p-6">
@@ -915,9 +1024,12 @@ export default function GatewayPage() {
             <h2 className="text-base font-semibold text-gray-900">Request Log</h2>
             <p className="text-xs text-gray-400 mt-0.5">Every request processed by the gateway · refreshes every 30s</p>
           </div>
-          <span className="flex items-center gap-1.5 text-xs text-gray-400">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-            Live
+          <span className="flex items-center gap-1.5 text-xs text-emerald-500 font-medium">
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+            </span>
+            Streaming live
           </span>
         </div>
         <div className="overflow-x-auto">
@@ -971,9 +1083,9 @@ export default function GatewayPage() {
                   return (
                     <motion.tr
                       key={r.id}
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      transition={{ delay: 0.45 + i * 0.02 }}
+                      initial={{ opacity: 0, backgroundColor: flashIds.has(r.id) ? '#d1fae5' : 'transparent' }}
+                      animate={{ opacity: 1, backgroundColor: 'transparent' }}
+                      transition={{ opacity: { duration: 0.3, delay: i < 5 ? i * 0.04 : 0 }, backgroundColor: { duration: 1.8 } }}
                       className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors"
                     >
                       <td className="px-6 py-3 text-gray-500 text-xs whitespace-nowrap">
