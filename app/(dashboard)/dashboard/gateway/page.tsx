@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Key, TrendingUp, Zap, Activity, Plus, X, Trash2, Copy, Check, Eye, EyeOff } from 'lucide-react';
 import { BackButton } from '@/components/back-button';
 import {
-  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
 } from 'recharts';
 
 const fetcher = (url: string) => fetch(url).then(r => r.json());
@@ -102,8 +102,8 @@ function CostChart({ days }: { days: number }) {
 
   return (
     <ResponsiveContainer width="100%" height={200}>
-      <LineChart data={formatted} margin={{ top: 4, right: 8, left: -10, bottom: 0 }}>
-        <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
+      <BarChart data={formatted} margin={{ top: 4, right: 8, left: -10, bottom: 0 }} barCategoryGap="30%" barGap={3}>
+        <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" vertical={false} />
         <XAxis dataKey="date" tick={{ fontSize: 11, fill: '#9ca3af' }} axisLine={false} tickLine={false} />
         <YAxis tick={{ fontSize: 11, fill: '#9ca3af' }} axisLine={false} tickLine={false}
           tickFormatter={v => `$${Number(v).toFixed(4)}`} />
@@ -112,11 +112,9 @@ function CostChart({ days }: { days: number }) {
           formatter={(v: any, name: any) => [fmt$(Number(v)), name]}
         />
         <Legend wrapperStyle={{ fontSize: 12, paddingTop: 8 }} />
-        <Line type="monotone" dataKey="Without optimizer" stroke="#d1d5db" strokeDasharray="5 3"
-          strokeWidth={2} dot={{ r: 3, fill: '#d1d5db' }} activeDot={{ r: 5 }} />
-        <Line type="monotone" dataKey="With optimizer" stroke="#10b981"
-          strokeWidth={2.5} dot={{ r: 3, fill: '#10b981' }} activeDot={{ r: 5 }} />
-      </LineChart>
+        <Bar dataKey="Without optimizer" fill="#d1d5db" radius={[3, 3, 0, 0]} />
+        <Bar dataKey="With optimizer" fill="#10b981" radius={[3, 3, 0, 0]} />
+      </BarChart>
     </ResponsiveContainer>
   );
 }
