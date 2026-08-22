@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import useSWR from 'swr';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Key, TrendingUp, Zap, Activity, Plus, X, Trash2, Copy, Check, Eye, EyeOff, ArrowRight, ChevronDown } from 'lucide-react';
+import { Key, TrendingUp, Zap, Activity, Plus, X, Trash2, Copy, Check, Eye, EyeOff, ArrowRight, ChevronDown, Calendar, Filter } from 'lucide-react';
 import { BackButton } from '@/components/back-button';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
@@ -419,8 +419,24 @@ function RequestRow({ r, flash }: { r: any; flash: boolean }) {
   );
 }
 
+const ukHourFmt = new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/London', hour: '2-digit', hour12: false });
+function groupByHour(rows: any[]): { hour: string; label: string; rows: any[] }[] {
+  const map = new Map<string, any[]>();
+  for (const r of rows) {
+    const d = new Date(r.createdAt ?? r.created_at);
+    const h = ukHourFmt.format(d).replace(':', '').padStart(2, '0');
+    const key = `${h}:00`;
+    if (!map.has(key)) map.set(key, []);
+    map.get(key)!.push(r);
+  }
+  return Array.from(map.entries())
+    .sort(([a], [b]) => b.localeCompare(a))
+    .map(([hour, rows]) => ({ hour, label: `${hour} – ${String(Number(hour.slice(0, 2)) + 1).padStart(2, '0')}:00`, rows }));
+}
+
 function DayGroup({ group, defaultOpen, flashIds }: { group: DayTotals; defaultOpen: boolean; flashIds: Set<number> }) {
   const [open, setOpen] = useState(defaultOpen);
+  const [groupByTime, setGroupByTime] = useState(false);
   const avgTtft = group.ttfts.length ? Math.round(group.ttfts.reduce((a, b) => a + b, 0) / group.ttfts.length) : null;
   const avgThroughput = group.throughputs.length ? group.throughputs.reduce((a, b) => a + b, 0) / group.throughputs.length : null;
   const savingsPct = group.baseline > 0 ? (group.savings / group.baseline) * 100 : 0;
@@ -476,40 +492,74 @@ function DayGroup({ group, defaultOpen, flashIds }: { group: DayTotals; defaultO
             transition={{ duration: 0.22 }}
             className="overflow-hidden"
           >
-            <div className="overflow-x-auto bg-gray-50/30">
-              <table className="w-full text-sm min-w-[700px]">
-                <thead>
-                  <tr className="text-[10px] text-gray-400 uppercase tracking-wide border-b border-gray-100">
-                    <th className="pl-10 pr-4 py-2 text-left font-medium w-32">Time</th>
-                    <th className="px-4 py-2 text-left font-medium">Route</th>
-                    <th className="px-4 py-2 text-right font-medium">Tokens</th>
-                    <th className="px-4 py-2 text-right font-medium">Cost</th>
-                    <th className="px-4 py-2 text-right font-medium">Saved</th>
-                    <th className="px-4 py-2 text-left font-medium">Optimizations</th>
-                    <th className="px-4 py-2 text-right font-medium">Latency / Speed</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {group.requests.map(r => (
-                    <RequestRow key={r.id} r={r} flash={flashIds.has(r.id)} />
-                  ))}
-                </tbody>
-                {/* Day summary footer */}
-                <tfoot>
-                  <tr className="border-t border-gray-200 bg-gray-50 text-xs font-semibold text-gray-600">
-                    <td className="pl-10 pr-4 py-2.5" colSpan={2}>Day total — {group.count} requests</td>
-                    <td className="px-4 py-2.5 text-right">{group.tokens.toLocaleString()}</td>
-                    <td className="px-4 py-2.5 text-right">{fmt$(group.cost)}</td>
-                    <td className="px-4 py-2.5 text-right text-emerald-600">{group.savings > 0 ? `+${fmt$(group.savings)}` : '—'}</td>
-                    <td className="px-4 py-2.5">
-                      {cacheRate > 0 && <span className="text-violet-500">{cacheRate.toFixed(0)}% cache hit</span>}
-                    </td>
-                    <td className="px-4 py-2.5 text-right text-gray-400">
-                      {avgTtft ? `${avgTtft}ms avg` : '—'}
-                    </td>
-                  </tr>
-                </tfoot>
-              </table>
+            {/* Toolbar */}
+            <div className="px-6 py-2 border-b border-gray-100 flex items-center gap-3 bg-gray-50/50">
+              <button
+                onClick={e => { e.stopPropagation(); setGroupByTime(v => !v); }}
+                className={`flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-lg font-medium transition-colors ${
+                  groupByTime ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+                }`}
+              >
+                <Filter className="w-3 h-3" />
+                Group by hour
+              </button>
+              <span className="text-xs text-gray-400">{group.count} requests · {group.tokens.toLocaleString()} tokens total</span>
+            </div>
+
+            <div className="overflow-x-auto bg-gray-50/20">
+              {groupByTime ? (
+                /* ── Hour-grouped view ── */
+                <div>
+                  {groupByHour(group.requests).map(({ hour, label, rows }) => {
+                    const hourCost = rows.reduce((s, r) => s + parseFloat(String(r.costUsd ?? r.cost_usd ?? 0)), 0);
+                    const hourSaved = rows.reduce((s, r) => s + parseFloat(String(r.savingsUsd ?? r.savings_usd ?? 0)), 0);
+                    return (
+                      <details key={hour} className="group/hour">
+                        <summary className="flex items-center gap-4 px-6 py-2.5 cursor-pointer hover:bg-gray-50 border-b border-gray-50 list-none">
+                          <ChevronDown className="w-3 h-3 text-gray-400 transition-transform group-open/hour:rotate-0 -rotate-90" />
+                          <span className="text-xs font-semibold text-gray-600 w-28">{label}</span>
+                          <span className="text-xs text-gray-400">{rows.length} req</span>
+                          <span className="text-xs text-gray-600">{fmt$(hourCost)}</span>
+                          {hourSaved > 0 && <span className="text-xs text-emerald-600">+{fmt$(hourSaved)} saved</span>}
+                        </summary>
+                        <table className="w-full text-sm min-w-[700px]">
+                          <tbody>
+                            {rows.map(r => <RequestRow key={r.id} r={r} flash={flashIds.has(r.id)} />)}
+                          </tbody>
+                        </table>
+                      </details>
+                    );
+                  })}
+                </div>
+              ) : (
+                /* ── Flat request table ── */
+                <table className="w-full text-sm min-w-[700px]">
+                  <thead>
+                    <tr className="text-[10px] text-gray-400 uppercase tracking-wide border-b border-gray-100">
+                      <th className="pl-10 pr-4 py-2 text-left font-medium w-32">Time</th>
+                      <th className="px-4 py-2 text-left font-medium">Route</th>
+                      <th className="px-4 py-2 text-right font-medium">Tokens</th>
+                      <th className="px-4 py-2 text-right font-medium">Cost</th>
+                      <th className="px-4 py-2 text-right font-medium">Saved</th>
+                      <th className="px-4 py-2 text-left font-medium">Optimizations</th>
+                      <th className="px-4 py-2 text-right font-medium">Latency / Speed</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {group.requests.map(r => <RequestRow key={r.id} r={r} flash={flashIds.has(r.id)} />)}
+                  </tbody>
+                  <tfoot>
+                    <tr className="border-t border-gray-200 bg-gray-50 text-xs font-semibold text-gray-600">
+                      <td className="pl-10 pr-4 py-2.5" colSpan={2}>Day total — {group.count} requests</td>
+                      <td className="px-4 py-2.5 text-right">{group.tokens.toLocaleString()}</td>
+                      <td className="px-4 py-2.5 text-right">{fmt$(group.cost)}</td>
+                      <td className="px-4 py-2.5 text-right text-emerald-600">{group.savings > 0 ? `+${fmt$(group.savings)}` : '—'}</td>
+                      <td className="px-4 py-2.5">{cacheRate > 0 && <span className="text-violet-500">{cacheRate.toFixed(0)}% cache hit</span>}</td>
+                      <td className="px-4 py-2.5 text-right text-gray-400">{avgTtft ? `${avgTtft}ms avg` : '—'}</td>
+                    </tr>
+                  </tfoot>
+                </table>
+              )}
             </div>
           </motion.div>
         )}
@@ -519,9 +569,39 @@ function DayGroup({ group, defaultOpen, flashIds }: { group: DayTotals; defaultO
 }
 
 function DayGroupedLog({ requests, loading, flashIds }: { requests: any[]; loading: boolean; flashIds: Set<number> }) {
-  const groups = computeDayGroups(requests);
+  const [filterDate, setFilterDate] = useState('');
+  const allGroups = computeDayGroups(requests);
+  const groups = filterDate ? allGroups.filter(g => g.key === filterDate) : allGroups;
+
+  // Get available dates for the calendar hint
+  const availableDates = new Set(allGroups.map(g => g.key));
+
   return (
     <div>
+      {/* Calendar filter toolbar */}
+      <div className="px-6 py-3 border-b border-gray-100 flex items-center gap-3 bg-gray-50/40">
+        <Calendar className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
+        <label className="text-xs text-gray-500 font-medium">Jump to date</label>
+        <input
+          type="date"
+          value={filterDate}
+          max={todayKey}
+          onChange={e => setFilterDate(e.target.value)}
+          className="text-xs border border-gray-200 rounded-lg px-2.5 py-1 focus:outline-none focus:ring-2 focus:ring-gray-900/10 bg-white text-gray-700"
+        />
+        {filterDate && (
+          <button onClick={() => setFilterDate('')} className="text-xs text-gray-400 hover:text-gray-700 flex items-center gap-1">
+            <X className="w-3 h-3" /> Clear
+          </button>
+        )}
+        {filterDate && !availableDates.has(filterDate) && (
+          <span className="text-xs text-amber-500">No requests on this date</span>
+        )}
+        <span className="ml-auto text-xs text-gray-400">
+          {allGroups.length} day{allGroups.length !== 1 ? 's' : ''} · {requests.length} requests total
+        </span>
+      </div>
+
       {loading ? (
         <div className="space-y-px">
           {[...Array(3)].map((_, i) => (
@@ -532,7 +612,7 @@ function DayGroupedLog({ requests, loading, flashIds }: { requests: any[]; loadi
         </div>
       ) : groups.length === 0 ? (
         <div className="px-6 py-16 text-center text-sm text-gray-400">
-          No requests yet — send traffic through the gateway to see it here.
+          {filterDate ? `No requests on ${filterDate}` : 'No requests yet — send traffic through the gateway to see it here.'}
         </div>
       ) : (
         groups.map((g, i) => <DayGroup key={g.key} group={g} defaultOpen={i === 0} flashIds={flashIds} />)
