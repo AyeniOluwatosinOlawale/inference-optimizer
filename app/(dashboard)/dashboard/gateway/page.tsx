@@ -829,7 +829,7 @@ function GatewayKeysPanel({
   );
 }
 
-function ProviderKeysPanel() {
+function ProviderKeysPanel({ onProviderSelect }: { onProviderSelect?: (p: string | null) => void }) {
   const { data: keys = [], mutate, isLoading } = useSWR<any[]>('/api/provider-keys', fetcher);
   const [showForm, setShowForm] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -858,6 +858,7 @@ function ProviderKeysPanel() {
       }
       setForm({ provider: 'anthropic', api_key: '', base_url: '', name: '' });
       setShowForm(false);
+      onProviderSelect?.(null);
       mutate();
     } catch (err: any) {
       setError(err.message);
@@ -884,7 +885,12 @@ function ProviderKeysPanel() {
           <p className="text-xs text-gray-400 mt-0.5">Your API keys — encrypted at rest, used by the gateway on your behalf</p>
         </div>
         <button
-          onClick={() => { setShowForm(v => !v); setError(''); }}
+          onClick={() => {
+            const next = !showForm;
+            setShowForm(next);
+            setError('');
+            if (!next) onProviderSelect?.(null);
+          }}
           className="flex items-center gap-1.5 text-xs font-medium bg-gray-900 text-white px-3 py-1.5 rounded-lg hover:bg-gray-700 transition-colors"
         >
           {showForm ? <X className="w-3.5 h-3.5" /> : <Plus className="w-3.5 h-3.5" />}
@@ -908,7 +914,11 @@ function ProviderKeysPanel() {
               <label className="block text-xs font-medium text-gray-600 mb-1">Provider</label>
               <select
                 value={form.provider}
-                onChange={e => setForm(f => ({ ...f, provider: e.target.value }))}
+                onChange={e => {
+                  const p = e.target.value;
+                  setForm(f => ({ ...f, provider: p }));
+                  onProviderSelect?.(p);
+                }}
                 className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900/10 bg-white"
               >
                 {Object.entries(PROVIDERS).map(([v, { label }]) => (
@@ -1023,10 +1033,16 @@ type BaseTab = 'typescript' | 'curl';
 type ProviderTab = string; // "py-anthropic", "py-openai", etc.
 type AnyTab = BaseTab | ProviderTab;
 
-function buildSnippets(key: string, activeProviders: string[]): Record<AnyTab, { label: string; code: string }> {
+function buildSnippets(key: string, activeProviders: string[], focusProvider?: string): Record<AnyTab, { label: string; code: string }> {
+  const providers = [...activeProviders];
+  if (focusProvider && !providers.includes(focusProvider)) providers.push(focusProvider);
+
+  const fp = focusProvider ?? providers[0] ?? 'anthropic';
+  const fpCfg = PROVIDER_SNIPPET_CONFIG[fp] ?? PROVIDER_SNIPPET_CONFIG['anthropic'];
+
   const snippets: Record<AnyTab, { label: string; code: string }> = {};
 
-  for (const p of activeProviders) {
+  for (const p of providers) {
     const cfg = PROVIDER_SNIPPET_CONFIG[p];
     if (!cfg) continue;
     const isOpenRouter = p === 'openrouter';
@@ -1075,6 +1091,12 @@ print(f"Model used: {meta.get('model_used')}  Saved: \${meta.get('savings_usd', 
     };
   }
 
+  const tsExtraBody = fp === 'anthropic'
+    ? ''
+    : fp === 'openrouter'
+    ? `\n  extra_body: { provider: 'openai-compat', base_url: 'https://openrouter.ai/api/v1' },`
+    : `\n  extra_body: { provider: '${fpCfg.providerParam}' },`;
+
   snippets['typescript'] = {
     label: 'TypeScript',
     code: `// npm install openai@^1
@@ -1082,9 +1104,8 @@ import OpenAI from 'openai';
 
 const client = new OpenAI({ baseURL: '${GATEWAY_URL}', apiKey: '${key}' });
 
-// Change provider: extra_body: { provider: 'openai' | 'gemini' | 'groq' | 'anthropic' }
 const response = await client.chat.completions.create({
-  model: 'claude-opus-4-7',
+  model: '${fpCfg.model}',  // routes to ${fpCfg.routesTo} for simple tasks${tsExtraBody}
   messages: [{ role: 'user', content: 'Hello' }],
 });
 console.log(response.choices[0].message.content);
@@ -1093,45 +1114,44 @@ const meta = (response as any).gateway_meta ?? {};
 console.log('Model used:', meta.model_used, '| Saved: $' + meta.savings_usd);`,
   };
 
+  const curlExtraBody = fp === 'anthropic'
+    ? ''
+    : fp === 'openrouter'
+    ? `,"provider":"openai-compat","base_url":"https://openrouter.ai/api/v1"`
+    : `,"provider":"${fpCfg.providerParam}"`;
+
   snippets['curl'] = {
     label: 'cURL',
-    code: `# Claude (default)
-curl ${GATEWAY_URL}/chat/completions \\
+    code: `curl ${GATEWAY_URL}/chat/completions \\
   -H "Authorization: Bearer ${key}" \\
   -H "Content-Type: application/json" \\
-  -d '{"model":"claude-opus-4-7","messages":[{"role":"user","content":"Hello"}]}'
-
-# OpenAI — add "provider":"openai"
-curl ${GATEWAY_URL}/chat/completions \\
-  -H "Authorization: Bearer ${key}" \\
-  -H "Content-Type: application/json" \\
-  -d '{"model":"gpt-4o","messages":[{"role":"user","content":"Hello"}],"provider":"openai"}'
-
-# OpenRouter — provider=openai-compat + base_url
-curl ${GATEWAY_URL}/chat/completions \\
-  -H "Authorization: Bearer ${key}" \\
-  -H "Content-Type: application/json" \\
-  -d '{"model":"openai/gpt-4o","messages":[{"role":"user","content":"Hello"}],"provider":"openai-compat","base_url":"https://openrouter.ai/api/v1"}'
-
-# Gemini  — "provider":"gemini"
-# Groq    — "provider":"groq"`,
+  -d '{"model":"${fpCfg.model}","messages":[{"role":"user","content":"Hello"}]${curlExtraBody}}'`,
   };
 
   return snippets;
 }
 
-function QuickStart({ apiKey, hasKeys, activeProviders }: {
+function QuickStart({ apiKey, hasKeys, activeProviders, previewProvider }: {
   apiKey: string;
   hasKeys: boolean;
   activeProviders: string[];
+  previewProvider?: string | null;
 }) {
   const key = apiKey || '<your-gateway-key>';
-  const snippets = buildSnippets(key, activeProviders.length > 0 ? activeProviders : ['anthropic']);
+  const focusProvider = previewProvider ?? undefined;
+  const snippets = buildSnippets(key, activeProviders.length > 0 ? activeProviders : ['anthropic'], focusProvider);
   const tabKeys = Object.keys(snippets) as AnyTab[];
   const [tab, setTab] = useState<AnyTab>(tabKeys[0]);
   const [copied, setCopied] = useState(false);
 
-  // Reset to first tab when provider list changes
+  // Auto-switch tab when user picks a provider in the form
+  useEffect(() => {
+    if (!previewProvider) return;
+    const target = previewProvider === 'anthropic' ? 'py-anthropic-sdk' : `py-${previewProvider}`;
+    if (tabKeys.includes(target)) setTab(target);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [previewProvider]);
+
   const currentTab = tabKeys.includes(tab) ? tab : tabKeys[0];
 
   const handleCopy = async () => {
@@ -1202,6 +1222,7 @@ function QuickStart({ apiKey, hasKeys, activeProviders }: {
 export default function GatewayPage() {
   const [days, setDays] = useState(30);
   const [newKey, setNewKey] = useState<string | null>(null);
+  const [previewProvider, setPreviewProvider] = useState<string | null>(null);
   const { data: gatewayKeys = [] } = useSWR<any[]>('/api/gateway/keys', fetcher);
   const { data: providerKeys = [] } = useSWR<any[]>('/api/provider-keys', fetcher);
   const activeKey = newKey ?? '';
@@ -1359,7 +1380,7 @@ export default function GatewayPage() {
         <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.42, duration: 0.4 }}
           className="grid grid-cols-1 xl:grid-cols-2 gap-5">
           <GatewayKeysPanel newKey={newKey} setNewKey={setNewKey} />
-          <ProviderKeysPanel />
+          <ProviderKeysPanel onProviderSelect={setPreviewProvider} />
         </motion.div>
 
         {/* Quick Start */}
