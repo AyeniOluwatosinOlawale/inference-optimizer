@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import useSWR from 'swr';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Key, TrendingUp, Zap, Activity, Plus, X, Trash2, Copy, Check, Eye, EyeOff, ArrowRight } from 'lucide-react';
+import { Key, TrendingUp, Zap, Activity, Plus, X, Trash2, Copy, Check, Eye, EyeOff, ArrowRight, ChevronDown } from 'lucide-react';
 import { BackButton } from '@/components/back-button';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
@@ -303,6 +303,241 @@ function OptBreakdown({ breakdown }: { breakdown: Record<string, { count: number
         ))}
       </tbody>
     </table>
+  );
+}
+
+// ── Day-grouped request log ───────────────────────────────────────────────────
+
+const ukDayFmt = new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/London', year: 'numeric', month: 'short', day: 'numeric' });
+const ukDayKey = (d: Date) => {
+  const p = new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/London', year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(d);
+  return `${p.find(x => x.type === 'year')!.value}-${p.find(x => x.type === 'month')!.value}-${p.find(x => x.type === 'day')!.value}`;
+};
+const todayKey = ukDayKey(new Date());
+
+interface DayTotals {
+  key: string;
+  label: string;
+  requests: any[];
+  count: number;
+  tokens: number;
+  cost: number;
+  savings: number;
+  baseline: number;
+  cacheHits: number;
+  ttfts: number[];
+  throughputs: number[];
+  models: Set<string>;
+}
+
+function computeDayGroups(rows: any[]): DayTotals[] {
+  const map = new Map<string, DayTotals>();
+  for (const r of rows) {
+    const date = new Date(r.createdAt ?? r.created_at);
+    const key = ukDayKey(date);
+    if (!map.has(key)) {
+      map.set(key, { key, label: ukDayFmt.format(date), requests: [], count: 0, tokens: 0, cost: 0, savings: 0, baseline: 0, cacheHits: 0, ttfts: [], throughputs: [], models: new Set() });
+    }
+    const g = map.get(key)!;
+    g.requests.push(r);
+    g.count++;
+    g.tokens += (r.inputTokens ?? r.input_tokens ?? 0) + (r.outputTokens ?? r.output_tokens ?? 0);
+    g.cost += parseFloat(String(r.costUsd ?? r.cost_usd ?? 0));
+    g.savings += parseFloat(String(r.savingsUsd ?? r.savings_usd ?? 0));
+    g.baseline += parseFloat(String(r.baselineCostUsd ?? r.baseline_cost_usd ?? 0));
+    if (r.fromCache ?? r.from_cache) g.cacheHits++;
+    const ttft = r.ttftMs ?? r.ttft_ms;
+    if (ttft) g.ttfts.push(ttft);
+    const total = r.totalMs ?? r.total_ms ?? 0;
+    const outTok = r.outputTokens ?? r.output_tokens ?? 0;
+    const decodeMs = total - (ttft ?? 0);
+    if (decodeMs > 0 && outTok > 0) g.throughputs.push((outTok / decodeMs) * 1000);
+    const used = r.modelUsed ?? r.model_used;
+    if (used) g.models.add(MODEL_SHORT[used] ?? used);
+  }
+  return Array.from(map.values()).sort((a, b) => b.key.localeCompare(a.key));
+}
+
+function RequestRow({ r, flash }: { r: any; flash: boolean }) {
+  const reqModel = MODEL_SHORT[r.modelRequested ?? r.model_requested] ?? (r.modelRequested ?? r.model_requested);
+  const usedModel = MODEL_SHORT[r.modelUsed ?? r.model_used] ?? (r.modelUsed ?? r.model_used);
+  const routed = reqModel !== usedModel;
+  const savings = parseFloat(String(r.savingsUsd ?? r.savings_usd ?? 0));
+  const cost = parseFloat(String(r.costUsd ?? r.cost_usd ?? 0));
+  const opts: string[] = (() => {
+    const raw = r.optimizations ?? [];
+    if (typeof raw === 'string') { try { return JSON.parse(raw); } catch { return []; } }
+    return raw;
+  })();
+  const ttft = r.ttftMs ?? r.ttft_ms ?? 0;
+  const total = r.totalMs ?? r.total_ms ?? 0;
+  const outTok = r.outputTokens ?? r.output_tokens ?? 0;
+  const decodeMs = total - ttft;
+  const tpot = decodeMs > 0 && outTok > 0 ? decodeMs / outTok : null;
+  const throughput = decodeMs > 0 && outTok > 0 ? (outTok / decodeMs) * 1000 : null;
+  const savingsPct = savings > 0 && (cost + savings) > 0 ? (savings / (cost + savings)) * 100 : 0;
+
+  return (
+    <motion.tr
+      key={r.id}
+      initial={{ opacity: 0, backgroundColor: flash ? '#d1fae5' : 'transparent' }}
+      animate={{ opacity: 1, backgroundColor: 'transparent' }}
+      transition={{ opacity: { duration: 0.25 }, backgroundColor: { duration: 1.8 } }}
+      className="border-b border-gray-50 hover:bg-gray-50/40 transition-colors group"
+    >
+      <td className="pl-10 pr-4 py-3 text-gray-400 text-xs whitespace-nowrap w-32">
+        {new Date(r.createdAt ?? r.created_at).toLocaleTimeString('en-GB', { timeZone: 'Europe/London', hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+      </td>
+      <td className="px-4 py-3 whitespace-nowrap">
+        <div className="flex items-center gap-1.5 text-xs">
+          <span className="text-gray-400">{reqModel}</span>
+          {routed && (<><span className="text-gray-300">→</span><span className="font-semibold text-gray-800 bg-emerald-50 px-1.5 py-0.5 rounded">{usedModel}</span></>)}
+          {!routed && <span className="font-semibold text-gray-700">{usedModel}</span>}
+        </div>
+      </td>
+      <td className="px-4 py-3 text-right text-xs text-gray-500">
+        {((r.inputTokens ?? r.input_tokens ?? 0) + outTok).toLocaleString()}
+      </td>
+      <td className="px-4 py-3 text-right text-xs font-medium text-gray-900">
+        {(r.fromCache ?? r.from_cache) ? <span className="text-emerald-600 font-semibold">Free</span> : fmt$(cost)}
+      </td>
+      <td className="px-4 py-3 text-right text-xs">
+        {savings > 0 ? (
+          <span className="font-semibold text-emerald-600">+{fmt$(savings)}</span>
+        ) : <span className="text-gray-300">—</span>}
+        {savingsPct > 0 && <div className="text-[10px] text-emerald-400">{savingsPct.toFixed(0)}%</div>}
+      </td>
+      <td className="px-4 py-3">
+        <div className="flex flex-wrap gap-1">{opts.map(o => <OptPill key={o} label={o} />)}</div>
+      </td>
+      <td className="px-4 py-3 text-right text-xs text-gray-500 whitespace-nowrap">
+        <div>{ttft ? `${ttft}ms TTFT` : total ? `${total}ms` : '—'}</div>
+        {tpot !== null && <div className="text-gray-400">{tpot.toFixed(1)}ms/tok</div>}
+        {throughput !== null && <div className="text-emerald-500 font-medium">{throughput.toFixed(1)} tok/s</div>}
+      </td>
+    </motion.tr>
+  );
+}
+
+function DayGroup({ group, defaultOpen, flashIds }: { group: DayTotals; defaultOpen: boolean; flashIds: Set<number> }) {
+  const [open, setOpen] = useState(defaultOpen);
+  const avgTtft = group.ttfts.length ? Math.round(group.ttfts.reduce((a, b) => a + b, 0) / group.ttfts.length) : null;
+  const avgThroughput = group.throughputs.length ? group.throughputs.reduce((a, b) => a + b, 0) / group.throughputs.length : null;
+  const savingsPct = group.baseline > 0 ? (group.savings / group.baseline) * 100 : 0;
+  const cacheRate = group.count > 0 ? (group.cacheHits / group.count) * 100 : 0;
+  const isToday = group.key === todayKey;
+
+  return (
+    <div className="border-b border-gray-50 last:border-0">
+      {/* Day header — clickable */}
+      <button
+        onClick={() => setOpen(v => !v)}
+        className="w-full flex items-center gap-3 px-6 py-4 hover:bg-gray-50/60 transition-colors text-left"
+      >
+        <ChevronDown className={`w-4 h-4 text-gray-400 flex-shrink-0 transition-transform duration-200 ${open ? 'rotate-0' : '-rotate-90'}`} />
+
+        {/* Date + today badge */}
+        <div className="flex items-center gap-2 w-32 flex-shrink-0">
+          <span className="text-sm font-semibold text-gray-800">{group.label}</span>
+          {isToday && <span className="text-[10px] font-bold uppercase tracking-wide bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded-full">Today</span>}
+        </div>
+
+        {/* Metrics row */}
+        <div className="flex items-center gap-4 flex-wrap flex-1 min-w-0">
+          <span className="text-xs text-gray-500">{group.count} req</span>
+          <span className="text-xs text-gray-400">{group.tokens.toLocaleString()} tok</span>
+          <span className="text-xs font-medium text-gray-700">{fmt$(group.cost)}</span>
+          {group.savings > 0 && (
+            <span className="text-xs font-semibold text-emerald-600">
+              +{fmt$(group.savings)} saved
+              <span className="ml-1 text-emerald-400 font-normal">({savingsPct.toFixed(0)}%)</span>
+            </span>
+          )}
+          {cacheRate > 0 && <span className="text-xs text-violet-500">{cacheRate.toFixed(0)}% cached</span>}
+          {avgTtft && <span className="text-xs text-gray-400">avg {avgTtft}ms</span>}
+          {avgThroughput && <span className="text-xs text-gray-400">{avgThroughput.toFixed(0)} tok/s avg</span>}
+        </div>
+
+        {/* Model badges */}
+        <div className="flex items-center gap-1 flex-shrink-0">
+          {Array.from(group.models).slice(0, 4).map(m => (
+            <span key={m} className="text-[10px] bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full font-medium">{m}</span>
+          ))}
+        </div>
+      </button>
+
+      {/* Expanded rows */}
+      <AnimatePresence initial={false}>
+        {open && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.22 }}
+            className="overflow-hidden"
+          >
+            <div className="overflow-x-auto bg-gray-50/30">
+              <table className="w-full text-sm min-w-[700px]">
+                <thead>
+                  <tr className="text-[10px] text-gray-400 uppercase tracking-wide border-b border-gray-100">
+                    <th className="pl-10 pr-4 py-2 text-left font-medium w-32">Time</th>
+                    <th className="px-4 py-2 text-left font-medium">Route</th>
+                    <th className="px-4 py-2 text-right font-medium">Tokens</th>
+                    <th className="px-4 py-2 text-right font-medium">Cost</th>
+                    <th className="px-4 py-2 text-right font-medium">Saved</th>
+                    <th className="px-4 py-2 text-left font-medium">Optimizations</th>
+                    <th className="px-4 py-2 text-right font-medium">Latency / Speed</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {group.requests.map(r => (
+                    <RequestRow key={r.id} r={r} flash={flashIds.has(r.id)} />
+                  ))}
+                </tbody>
+                {/* Day summary footer */}
+                <tfoot>
+                  <tr className="border-t border-gray-200 bg-gray-50 text-xs font-semibold text-gray-600">
+                    <td className="pl-10 pr-4 py-2.5" colSpan={2}>Day total — {group.count} requests</td>
+                    <td className="px-4 py-2.5 text-right">{group.tokens.toLocaleString()}</td>
+                    <td className="px-4 py-2.5 text-right">{fmt$(group.cost)}</td>
+                    <td className="px-4 py-2.5 text-right text-emerald-600">{group.savings > 0 ? `+${fmt$(group.savings)}` : '—'}</td>
+                    <td className="px-4 py-2.5">
+                      {cacheRate > 0 && <span className="text-violet-500">{cacheRate.toFixed(0)}% cache hit</span>}
+                    </td>
+                    <td className="px-4 py-2.5 text-right text-gray-400">
+                      {avgTtft ? `${avgTtft}ms avg` : '—'}
+                    </td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
+function DayGroupedLog({ requests, loading, flashIds }: { requests: any[]; loading: boolean; flashIds: Set<number> }) {
+  const groups = computeDayGroups(requests);
+  return (
+    <div>
+      {loading ? (
+        <div className="space-y-px">
+          {[...Array(3)].map((_, i) => (
+            <div key={i} className="px-6 py-4 border-b border-gray-50">
+              <div className="h-4 bg-gray-100 rounded animate-pulse w-3/4" />
+            </div>
+          ))}
+        </div>
+      ) : groups.length === 0 ? (
+        <div className="px-6 py-16 text-center text-sm text-gray-400">
+          No requests yet — send traffic through the gateway to see it here.
+        </div>
+      ) : (
+        groups.map((g, i) => <DayGroup key={g.key} group={g} defaultOpen={i === 0} flashIds={flashIds} />)
+      )}
+    </div>
   );
 }
 
@@ -1019,126 +1254,20 @@ export default function GatewayPage() {
         <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.34, duration: 0.4 }}
           className="bg-white border border-gray-100 rounded-2xl shadow-sm overflow-hidden"
         >
-        <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
-          <div>
-            <h2 className="text-base font-semibold text-gray-900">Request Log</h2>
-            <p className="text-xs text-gray-400 mt-0.5">Every request processed by the gateway · refreshes every 30s</p>
-          </div>
-          <span className="flex items-center gap-1.5 text-xs text-emerald-500 font-medium">
-            <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+          <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+            <div>
+              <h2 className="text-base font-semibold text-gray-900">Request Log</h2>
+              <p className="text-xs text-gray-400 mt-0.5">Grouped by day · click to expand · new requests appear instantly</p>
+            </div>
+            <span className="flex items-center gap-1.5 text-xs text-emerald-500 font-medium">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+              </span>
+              Streaming live
             </span>
-            Streaming live
-          </span>
-        </div>
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm min-w-[600px]">
-            <thead>
-              <tr className="text-xs text-gray-400 uppercase tracking-wide border-b border-gray-50">
-                <th className="px-6 py-3 text-left font-medium">Time</th>
-                <th className="px-6 py-3 text-left font-medium">Route</th>
-                <th className="px-6 py-3 text-right font-medium">Tokens</th>
-                <th className="px-6 py-3 text-right font-medium">Cost</th>
-                <th className="px-6 py-3 text-right font-medium">Saved</th>
-                <th className="px-6 py-3 text-left font-medium">Optimizations</th>
-                <th className="px-6 py-3 text-right font-medium">Latency / Speed</th>
-              </tr>
-            </thead>
-            <tbody>
-              {loading ? (
-                [...Array(5)].map((_, i) => (
-                  <tr key={i} className="border-b border-gray-50">
-                    {[...Array(7)].map((_, j) => (
-                      <td key={j} className="px-6 py-3">
-                        <div className="h-3 bg-gray-100 rounded animate-pulse" />
-                      </td>
-                    ))}
-                  </tr>
-                ))
-              ) : requests.length === 0 ? (
-                <tr>
-                  <td colSpan={7} className="px-6 py-12 text-center text-gray-400 text-sm">
-                    No requests yet — send traffic through the gateway to see it here.
-                  </td>
-                </tr>
-              ) : (
-                requests.map((r: any, i: number) => {
-                  const reqModel = MODEL_SHORT[r.modelRequested ?? r.model_requested] ?? (r.modelRequested ?? r.model_requested);
-                  const usedModel = MODEL_SHORT[r.modelUsed ?? r.model_used] ?? (r.modelUsed ?? r.model_used);
-                  const routed = reqModel !== usedModel;
-                  const savings = parseFloat(String(r.savingsUsd ?? r.savings_usd ?? '0'));
-                  const cost = parseFloat(String(r.costUsd ?? r.cost_usd ?? '0'));
-                  const opts: string[] = (() => {
-                    const raw = r.optimizations ?? [];
-                    if (typeof raw === 'string') { try { return JSON.parse(raw); } catch { return []; } }
-                    return raw;
-                  })();
-                  const ttft = r.ttftMs ?? r.ttft_ms ?? 0;
-                  const total = r.totalMs ?? r.total_ms ?? 0;
-                  const outTok = r.outputTokens ?? r.output_tokens ?? 0;
-                  const decodeMs = total - ttft;
-                  const tpot = decodeMs > 0 && outTok > 0 ? decodeMs / outTok : null;
-                  const throughput = decodeMs > 0 && outTok > 0 ? (outTok / decodeMs) * 1000 : null;
-                  return (
-                    <motion.tr
-                      key={r.id}
-                      initial={{ opacity: 0, backgroundColor: flashIds.has(r.id) ? '#d1fae5' : 'transparent' }}
-                      animate={{ opacity: 1, backgroundColor: 'transparent' }}
-                      transition={{ opacity: { duration: 0.3, delay: i < 5 ? i * 0.04 : 0 }, backgroundColor: { duration: 1.8 } }}
-                      className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors"
-                    >
-                      <td className="px-6 py-3 text-gray-500 text-xs whitespace-nowrap">
-                        {new Date(r.createdAt ?? r.created_at).toLocaleString(undefined, {
-                          month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit',
-                        })}
-                      </td>
-                      <td className="px-6 py-3 whitespace-nowrap">
-                        <div className="flex items-center gap-1.5 text-xs">
-                          <span className="text-gray-400">{reqModel}</span>
-                          {routed && (
-                            <>
-                              <span className="text-gray-300">→</span>
-                              <span className="font-semibold text-gray-800 bg-emerald-50 px-1.5 py-0.5 rounded">
-                                {usedModel}
-                              </span>
-                            </>
-                          )}
-                          {!routed && <span className="font-semibold text-gray-800">{usedModel}</span>}
-                        </div>
-                      </td>
-                      <td className="px-6 py-3 text-right text-xs text-gray-600">
-                        {((r.inputTokens ?? r.input_tokens ?? 0) + (r.outputTokens ?? r.output_tokens ?? 0)).toLocaleString()}
-                      </td>
-                      <td className="px-6 py-3 text-right text-xs font-medium text-gray-900">
-                        {(r.fromCache ?? r.from_cache) ? (
-                          <span className="text-emerald-600 font-semibold">Free</span>
-                        ) : fmt$(cost)}
-                      </td>
-                      <td className="px-6 py-3 text-right text-xs font-semibold text-emerald-600">
-                        {savings > 0 ? `+${fmt$(savings)}` : '—'}
-                      </td>
-                      <td className="px-6 py-3">
-                        <div className="flex flex-wrap gap-1">
-                          {opts.map((o: string) => <OptPill key={o} label={o} />)}
-                        </div>
-                      </td>
-                      <td className="px-6 py-3 text-right text-xs text-gray-500 whitespace-nowrap">
-                        <div>{ttft ? `${ttft}ms TTFT` : total ? `${total}ms` : '—'}</div>
-                        {tpot !== null && (
-                          <div className="text-gray-400">{tpot.toFixed(1)}ms/tok</div>
-                        )}
-                        {throughput !== null && (
-                          <div className="text-emerald-500 font-medium">{throughput.toFixed(1)} tok/s</div>
-                        )}
-                      </td>
-                    </motion.tr>
-                  );
-                })
-              )}
-            </tbody>
-          </table>
-        </div>
+          </div>
+          <DayGroupedLog requests={requests} loading={loading} flashIds={flashIds} />
         </motion.div>
       </section>
 
