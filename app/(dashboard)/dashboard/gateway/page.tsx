@@ -1414,7 +1414,7 @@ export default function GatewayPage() {
         </motion.div>
 
         {/* Quick Start */}
-        <QuickStart apiKey={activeKey} hasKeys={gatewayKeys.length > 0} activeProviders={activeProviders} />
+        <QuickStart apiKey={activeKey} hasKeys={gatewayKeys.length > 0} activeProviders={activeProviders} previewProvider={previewProvider} />
       </section>
 
     </div>
