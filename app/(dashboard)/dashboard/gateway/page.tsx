@@ -240,6 +240,52 @@ function CostChart({ days }: { days: number }) {
   );
 }
 
+function DailyBreakdown({ days }: { days: number }) {
+  const { data, isLoading } = useSWR(`/api/gateway/timeseries?days=${days}`, fetcher, { refreshInterval: 30000 });
+  const rows: any[] = (data?.data ?? []).slice().reverse(); // newest first
+
+  if (isLoading) return <div className="h-12 animate-pulse bg-gray-50 rounded-xl" />;
+  if (rows.length === 0) return null;
+
+  return (
+    <div className="bg-white border border-gray-100 rounded-2xl shadow-sm overflow-hidden">
+      <div className="px-5 py-3 border-b border-gray-50">
+        <p className="text-xs font-semibold text-gray-500 uppercase tracking-widest">Daily Breakdown</p>
+      </div>
+      <table className="w-full text-sm">
+        <thead>
+          <tr className="text-[11px] font-medium text-gray-400 uppercase tracking-wide">
+            <th className="text-left px-5 py-2.5">Date</th>
+            <th className="text-right px-5 py-2.5">Requests</th>
+            <th className="text-right px-5 py-2.5">Without optimizer</th>
+            <th className="text-right px-5 py-2.5">With optimizer</th>
+            <th className="text-right px-5 py-2.5">Saved</th>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-gray-50">
+          {rows.map((r: any) => {
+            const cost     = r.cost as number;
+            const baseline = Math.max(r.baseline as number, cost);
+            const saved    = Math.max(0, baseline - cost);
+            const date     = new Date(r.date).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
+            return (
+              <tr key={r.date} className="hover:bg-gray-50 transition-colors">
+                <td className="px-5 py-3 text-gray-700 font-medium">{date}</td>
+                <td className="px-5 py-3 text-right text-gray-600">{r.requests}</td>
+                <td className="px-5 py-3 text-right text-gray-400 line-through">{fmt$(baseline)}</td>
+                <td className="px-5 py-3 text-right text-gray-900 font-medium">{fmt$(cost)}</td>
+                <td className={`px-5 py-3 text-right font-semibold ${saved > 0 ? 'text-emerald-600' : 'text-gray-400'}`}>
+                  {saved > 0 ? `+${fmt$(saved)}` : '—'}
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
 const MODEL_COLORS: Record<string, string> = {
   'claude-haiku-4-5':         '#10b981',
   'claude-sonnet-4-6':        '#3b82f6',
@@ -1372,6 +1418,9 @@ export default function GatewayPage() {
             </div>
               );
             })()}
+
+            {/* Daily Breakdown */}
+            <DailyBreakdown days={days} />
 
             {/* Savings Story */}
             <SavingsStory summary={summary} loading={false} />
