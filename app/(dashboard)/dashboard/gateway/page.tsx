@@ -211,22 +211,28 @@ function CostChart({ days }: { days: number }) {
     'With optimizer': parseFloat(r.cost.toFixed(6)),
   }));
 
+  // Minimum 36px per day pair so bars are always readable
+  const minWidth = Math.max(formatted.length * 36, 400);
+
   return (
-    <ResponsiveContainer width="100%" height={200}>
-      <BarChart data={formatted} margin={{ top: 4, right: 8, left: -10, bottom: 0 }} barCategoryGap="30%" barGap={3}>
-        <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" vertical={false} />
-        <XAxis dataKey="date" tick={{ fontSize: 11, fill: '#9ca3af' }} axisLine={false} tickLine={false} />
-        <YAxis tick={{ fontSize: 11, fill: '#9ca3af' }} axisLine={false} tickLine={false}
-          tickFormatter={v => `$${Number(v).toFixed(4)}`} />
-        <Tooltip
-          contentStyle={{ fontSize: 12, borderRadius: 8, border: '1px solid #e5e7eb' }}
-          formatter={(v: any, name: any) => [fmt$(Number(v)), name]}
-        />
-        <Legend wrapperStyle={{ fontSize: 12, paddingTop: 8 }} />
-        <Bar dataKey="Without optimizer" fill="#d1d5db" radius={[3, 3, 0, 0]} />
-        <Bar dataKey="With optimizer" fill="#10b981" radius={[3, 3, 0, 0]} />
-      </BarChart>
-    </ResponsiveContainer>
+    <div className="overflow-x-auto">
+      <div style={{ minWidth }}>
+        <BarChart width={minWidth} height={200} data={formatted}
+          margin={{ top: 4, right: 8, left: -10, bottom: 0 }} barCategoryGap="30%" barGap={3}>
+          <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" vertical={false} />
+          <XAxis dataKey="date" tick={{ fontSize: 11, fill: '#9ca3af' }} axisLine={false} tickLine={false} />
+          <YAxis tick={{ fontSize: 11, fill: '#9ca3af' }} axisLine={false} tickLine={false}
+            tickFormatter={v => `$${Number(v).toFixed(4)}`} />
+          <Tooltip
+            contentStyle={{ fontSize: 12, borderRadius: 8, border: '1px solid #e5e7eb' }}
+            formatter={(v: any, name: any) => [fmt$(Number(v)), name]}
+          />
+          <Legend wrapperStyle={{ fontSize: 12, paddingTop: 8 }} />
+          <Bar dataKey="Without optimizer" fill="#d1d5db" radius={[3, 3, 0, 0]} />
+          <Bar dataKey="With optimizer" fill="#10b981" radius={[3, 3, 0, 0]} />
+        </BarChart>
+      </div>
+    </div>
   );
 }
 
