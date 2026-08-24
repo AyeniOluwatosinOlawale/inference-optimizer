@@ -1295,12 +1295,12 @@ export default function GatewayPage() {
           <p className="text-sm text-gray-500 mt-0.5">AI cost optimizer — every request, automatically.</p>
         </div>
         <div className="flex gap-1 bg-gray-100 rounded-lg p-1">
-          {([7, 30, 90] as const).map(d => (
+          {([1, 7, 30, 90] as const).map(d => (
             <button key={d} onClick={() => setDays(d)}
               className={`text-xs px-3 py-1.5 rounded-md font-medium transition-all ${
                 days === d ? 'bg-white shadow text-gray-900' : 'text-gray-500 hover:text-gray-700'
               }`}
-            >{d}d</button>
+            >{d === 1 ? 'Today' : `${d}d`}</button>
           ))}
         </div>
       </motion.div>
