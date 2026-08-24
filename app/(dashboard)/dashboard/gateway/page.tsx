@@ -13,11 +13,13 @@ import {
 const fetcher = (url: string) => fetch(url).then(r => r.json());
 
 // ── Real-time SSE hook ────────────────────────────────────────────────────────
-function useRealtimeRequests(initialLastId: number) {
+function useRealtimeRequests(initialLastId: number, onNewRows?: () => void) {
   const [liveRows, setLiveRows] = useState<any[]>([]);
   const [flashIds, setFlashIds] = useState<Set<number>>(new Set());
   const lastIdRef = useRef(initialLastId);
   const esRef = useRef<EventSource | null>(null);
+  const onNewRowsRef = useRef(onNewRows);
+  onNewRowsRef.current = onNewRows;
 
   const connect = useCallback(() => {
     if (esRef.current) esRef.current.close();
@@ -39,6 +41,8 @@ function useRealtimeRequests(initialLastId: number) {
           setTimeout(() => setFlashIds(p => { const s = new Set(p); rows.forEach(r => s.delete(r.id)); return s; }), 1800);
           return next;
         });
+        // Revalidate summary + timeseries when new rows arrive
+        onNewRowsRef.current?.();
       } catch { /* ignore parse errors */ }
     };
 
@@ -1304,10 +1308,10 @@ export default function GatewayPage() {
     return ordered.filter(p => providers.includes(p));
   })();
 
-  const { data: summary, isLoading: loadingSummary } = useSWR(
+  const { data: summary, isLoading: loadingSummary, mutate: mutateSummary } = useSWR(
     `/api/gateway/summary?days=${days}`,
     fetcher,
-    { refreshInterval: 30000 }
+    { refreshInterval: 5000 }
   );
 
   // Initial request history via SWR (no polling — SSE handles live updates)
@@ -1319,8 +1323,8 @@ export default function GatewayPage() {
   const historicRows: any[] = reqData?.data ?? [];
   const initialLastId = historicRows.length > 0 ? (historicRows[0].id ?? 0) : 0;
 
-  // Real-time new rows via SSE
-  const { liveRows, flashIds } = useRealtimeRequests(initialLastId);
+  // Real-time new rows via SSE — also revalidates summary on each new row
+  const { liveRows, flashIds } = useRealtimeRequests(initialLastId, () => mutateSummary());
 
   // Merge: live rows at the top (deduped against historic)
   const historicIds = new Set(historicRows.map((r: any) => r.id));
