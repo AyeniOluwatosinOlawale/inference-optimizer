@@ -75,10 +75,12 @@ function SavingsStory({ summary, loading }: { summary: any; loading: boolean }) 
   }
   if (!summary || summary.total_requests === 0) return null;
 
-  const baseline = summary.total_baseline_usd as number;
   const actual = summary.total_cost_usd as number;
-  const saved = summary.total_savings_usd as number;
-  const pct = summary.savings_pct as number;
+  // "Without optimizer" must never be less than "with optimizer" — derive
+  // everything from the same totals so the three numbers are always consistent.
+  const baseline = Math.max(actual, summary.total_baseline_usd as number);
+  const saved = Math.max(0, baseline - actual);
+  const pct = baseline > 0 ? (saved / baseline) * 100 : 0;
 
   return (
     <motion.div
@@ -1338,11 +1340,17 @@ export default function GatewayPage() {
           <section className="space-y-5">
             <p className="text-[11px] font-semibold uppercase tracking-widest text-gray-400">Analytics</p>
 
+            {(() => {
+              const _actual = summary.total_cost_usd as number;
+              const _baseline = Math.max(_actual, summary.total_baseline_usd as number);
+              const _saved = Math.max(0, _baseline - _actual);
+              const _pct = _baseline > 0 ? (_saved / _baseline) * 100 : 0;
+              return (
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-              <KpiCard label="Total Saved" value={fmt$(summary.total_savings_usd)}
-                sub={`vs ${fmt$(summary.total_baseline_usd)} baseline`}
+              <KpiCard label="Total Saved" value={fmt$(_saved)}
+                sub={`vs ${fmt$(_baseline)} baseline`}
                 icon={TrendingUp} color="bg-emerald-50 text-emerald-600" delay={0.05} />
-              <KpiCard label="Savings Rate" value={fmtPct(summary.savings_pct)}
+              <KpiCard label="Savings Rate" value={fmtPct(_pct)}
                 sub="of baseline cost recovered"
                 icon={Zap} color="bg-blue-50 text-blue-600" delay={0.1} />
               <KpiCard label="Cache Hit Rate" value={fmtPct(summary.cache_hit_rate)}
@@ -1352,6 +1360,8 @@ export default function GatewayPage() {
                 sub={`avg ${summary.avg_ttft_ms ?? '—'}ms TTFT`}
                 icon={Activity} color="bg-amber-50 text-amber-600" delay={0.2} />
             </div>
+              );
+            })()}
 
             {/* Savings Story */}
             <SavingsStory summary={summary} loading={false} />
