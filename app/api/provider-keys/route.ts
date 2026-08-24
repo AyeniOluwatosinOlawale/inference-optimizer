@@ -5,7 +5,7 @@ import { providerKeys } from '@/lib/db/schema';
 import { getUser, getUserWithTeam } from '@/lib/db/queries';
 import { encryptKey, makeHint } from '@/lib/crypto';
 
-const VALID_PROVIDERS = ['anthropic', 'openai', 'gemini', 'groq', 'openai-compat'];
+const VALID_PROVIDERS = ['anthropic', 'openai', 'gemini', 'groq', 'openai-compat', 'openrouter'];
 
 async function getTeamId(): Promise<number | null> {
   const user = await getUser();
