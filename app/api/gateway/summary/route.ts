@@ -44,7 +44,7 @@ export async function GET(req: NextRequest) {
     if (r.fromCache) cacheHits++;
     const opts: string[] = Array.isArray(r.optimizations) ? (r.optimizations as string[]) : [];
     if (opts.length > 0) {
-      const savings = parseFloat(String(r.savingsUsd ?? '0'));
+      const savings = Math.max(0, parseFloat(String(r.savingsUsd ?? '0')));
       const share = savings / opts.length;
       for (const opt of opts) {
         if (!optBreakdown[opt]) optBreakdown[opt] = { count: 0, savings: 0 };
@@ -57,7 +57,7 @@ export async function GET(req: NextRequest) {
   const totalReqs = Number(agg.totalRequests ?? 0);
   const totalCost = parseFloat(String(agg.totalCost ?? '0'));
   const totalBaseline = parseFloat(String(agg.totalBaseline ?? '0'));
-  const totalSavings = parseFloat(String(agg.totalSavings ?? '0'));
+  const totalSavings = Math.max(0, parseFloat(String(agg.totalSavings ?? '0')));
 
   return NextResponse.json({
     total_requests: totalReqs,

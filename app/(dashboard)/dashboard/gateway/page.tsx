@@ -161,17 +161,29 @@ function KpiCard({ label, value, sub, icon: Icon, color, delay = 0 }: {
   );
 }
 
+const OPT_META: Record<string, { color: string; label: string; desc: string; effect: string }> = {
+  routing:           { color: 'bg-green-50 text-green-700',   label: 'Smart Routing',      desc: 'Automatically selects the cheapest model capable of handling the request.', effect: 'Reduces model cost by routing to a smaller model' },
+  prompt_caching:    { color: 'bg-blue-50 text-blue-700',     label: 'Prompt Cache',       desc: 'Repeated context (system prompt, docs) served from Anthropic cache at 10× lower token price.', effect: 'Cache-read tokens cost 10× less than regular input' },
+  coalescing:        { color: 'bg-amber-50 text-amber-700',   label: 'Dedup / Coalesce',   desc: 'Identical concurrent requests are merged — only one call is made to the provider, result is shared.', effect: 'Duplicate requests cost $0' },
+  fallback:          { color: 'bg-purple-50 text-purple-700', label: 'Fallback',            desc: 'Primary model was slow or unavailable; automatically switched to a faster fallback model.', effect: 'Avoids timeout cost and latency' },
+  early_stopping:    { color: 'bg-rose-50 text-rose-700',     label: 'Early Stop',         desc: 'Response was truncated at a natural stopping point before max_tokens, reducing billed output tokens.', effect: 'Fewer output tokens billed' },
+  prefill:           { color: 'bg-sky-50 text-sky-700',       label: 'Prefill',            desc: 'Assistant turn pre-seeded to steer output format, reducing tokens the model needs to generate.', effect: 'Reduces output token count' },
+  structured_output: { color: 'bg-teal-50 text-teal-700',    label: 'Structured Output',  desc: 'JSON schema enforced at the model level — eliminates costly retry loops caused by parsing errors.', effect: 'Eliminates retry cost' },
+  compression:       { color: 'bg-orange-50 text-orange-700', label: 'Compression',        desc: 'Input prompt was compressed before sending, reducing total input tokens billed.', effect: 'Fewer input tokens billed' },
+  context_management:{ color: 'bg-pink-50 text-pink-700',    label: 'Context Mgmt',       desc: 'Conversation history was trimmed to fit the context window without losing recent context.', effect: 'Prevents context-overflow errors' },
+  semantic_cache:    { color: 'bg-violet-50 text-violet-700', label: 'Semantic Cache',     desc: 'Semantically similar query matched a cached response — no provider call made.', effect: 'Request cost $0' },
+};
+
 function OptPill({ label }: { label: string }) {
-  const colors: Record<string, string> = {
-    routing: 'bg-green-50 text-green-700',
-    prompt_caching: 'bg-blue-50 text-blue-700',
-    coalescing: 'bg-amber-50 text-amber-700',
-    fallback: 'bg-purple-50 text-purple-700',
-    early_stopping: 'bg-rose-50 text-rose-700',
-  };
+  const meta = OPT_META[label];
+  const cls = meta?.color ?? 'bg-gray-100 text-gray-600';
+  const text = meta?.label ?? label.replace(/_/g, ' ');
   return (
-    <span className={`inline-block text-xs px-1.5 py-0.5 rounded font-medium ${colors[label] ?? 'bg-gray-100 text-gray-600'}`}>
-      {label.replace('_', ' ')}
+    <span
+      title={meta?.desc}
+      className={`inline-block text-xs px-1.5 py-0.5 rounded font-medium cursor-help ${cls}`}
+    >
+      {text}
     </span>
   );
 }
@@ -270,39 +282,33 @@ function ModelDonut({ distribution }: { distribution: Record<string, number> }) 
   );
 }
 
-const OPT_LABELS: Record<string, string> = {
-  routing:        'Smart Routing',
-  prompt_caching: 'Prompt Cache',
-  coalescing:     'Dedup/Coalesce',
-  fallback:       'Fallback',
-  early_stopping: 'Early Stop',
-};
-
 function OptBreakdown({ breakdown }: { breakdown: Record<string, { count: number; savings: number }> }) {
   const rows = Object.entries(breakdown).sort(([, a], [, b]) => b.savings - a.savings);
   if (rows.length === 0) return <div className="text-xs text-gray-400 py-4 text-center">No optimizations logged yet</div>;
   return (
-    <table className="w-full text-xs">
-      <thead>
-        <tr className="text-gray-400 uppercase tracking-wide border-b border-gray-100">
-          <th className="text-left pb-2 font-medium">Optimization</th>
-          <th className="text-right pb-2 font-medium">Requests</th>
-          <th className="text-right pb-2 font-medium">Saved</th>
-        </tr>
-      </thead>
-      <tbody>
-        {rows.map(([opt, { count, savings }]) => (
-          <tr key={opt} className="border-b border-gray-50">
-            <td className="py-2">
-              <OptPill label={opt} />
-              <span className="ml-2 text-gray-500">{OPT_LABELS[opt] ?? opt}</span>
-            </td>
-            <td className="py-2 text-right text-gray-600">{count.toLocaleString()}</td>
-            <td className="py-2 text-right font-semibold text-emerald-600">+{fmt$(savings)}</td>
-          </tr>
-        ))}
-      </tbody>
-    </table>
+    <div className="space-y-2">
+      {rows.map(([opt, { count, savings }]) => {
+        const meta = OPT_META[opt];
+        return (
+          <div key={opt} className="rounded-lg border border-gray-100 bg-gray-50/60 px-4 py-3">
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-0.5">
+                  <OptPill label={opt} />
+                  <span className="text-xs text-gray-400">{count.toLocaleString()} request{count !== 1 ? 's' : ''}</span>
+                </div>
+                <p className="text-xs text-gray-500 leading-snug mt-1">{meta?.desc ?? opt}</p>
+                <p className="text-[11px] text-gray-400 mt-0.5 italic">{meta?.effect}</p>
+              </div>
+              <div className="text-right flex-shrink-0">
+                <div className="text-sm font-bold text-emerald-600">+{fmt$(savings)}</div>
+                <div className="text-[10px] text-gray-400">saved</div>
+              </div>
+            </div>
+          </div>
+        );
+      })}
+    </div>
   );
 }
 
@@ -343,7 +349,7 @@ function computeDayGroups(rows: any[]): DayTotals[] {
     g.count++;
     g.tokens += (r.inputTokens ?? r.input_tokens ?? 0) + (r.outputTokens ?? r.output_tokens ?? 0);
     g.cost += parseFloat(String(r.costUsd ?? r.cost_usd ?? 0));
-    g.savings += parseFloat(String(r.savingsUsd ?? r.savings_usd ?? 0));
+    g.savings += Math.max(0, parseFloat(String(r.savingsUsd ?? r.savings_usd ?? 0)));
     g.baseline += parseFloat(String(r.baselineCostUsd ?? r.baseline_cost_usd ?? 0));
     if (r.fromCache ?? r.from_cache) g.cacheHits++;
     const ttft = r.ttftMs ?? r.ttft_ms;
@@ -362,7 +368,7 @@ function RequestRow({ r, flash }: { r: any; flash: boolean }) {
   const reqModel = MODEL_SHORT[r.modelRequested ?? r.model_requested] ?? (r.modelRequested ?? r.model_requested);
   const usedModel = MODEL_SHORT[r.modelUsed ?? r.model_used] ?? (r.modelUsed ?? r.model_used);
   const routed = reqModel !== usedModel;
-  const savings = parseFloat(String(r.savingsUsd ?? r.savings_usd ?? 0));
+  const savings = Math.max(0, parseFloat(String(r.savingsUsd ?? r.savings_usd ?? 0)));
   const cost = parseFloat(String(r.costUsd ?? r.cost_usd ?? 0));
   const opts: string[] = (() => {
     const raw = r.optimizations ?? [];
