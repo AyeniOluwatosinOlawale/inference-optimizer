@@ -43,7 +43,13 @@ export async function GET(req: NextRequest) {
 
   const data = Object.entries(byDate)
     .sort(([a], [b]) => a.localeCompare(b))
-    .map(([date, d]) => ({ date, ...d }));
+    .map(([date, d]) => ({
+      date,
+      requests: d.requests,
+      cost: d.cost,
+      baseline: Math.max(d.baseline, d.cost),
+      savings: Math.max(0, Math.max(d.baseline, d.cost) - d.cost),
+    }));
 
   return NextResponse.json({ data });
 }

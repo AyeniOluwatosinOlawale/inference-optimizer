@@ -205,11 +205,15 @@ function CostChart({ days }: { days: number }) {
     );
   }
 
-  const formatted = rows.map(r => ({
-    date: new Date(r.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }),
-    'Without optimizer': parseFloat(r.baseline.toFixed(6)),
-    'With optimizer': parseFloat(r.cost.toFixed(6)),
-  }));
+  const formatted = rows.map(r => {
+    const cost = parseFloat(r.cost.toFixed(6));
+    const baseline = parseFloat(Math.max(r.baseline, r.cost).toFixed(6));
+    return {
+      date: new Date(r.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }),
+      'Without optimizer': baseline,
+      'With optimizer': cost,
+    };
+  });
 
   // Minimum 36px per day pair so bars are always readable
   const minWidth = Math.max(formatted.length * 36, 400);
