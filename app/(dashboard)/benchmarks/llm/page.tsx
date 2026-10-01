@@ -152,7 +152,7 @@ const TOC = [
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 export const metadata = {
-  title: 'LLM Inference Benchmark — SGLang vs vLLM on Qwen3-8B / 2×H100',
+  title: 'LLM Inference Benchmark - SGLang vs vLLM on Qwen3-8B / 2×H100',
 };
 
 export default function LLMBenchmarkPage() {
@@ -265,23 +265,23 @@ export default function LLMBenchmarkPage() {
 
           {/* ── UC1 ────────────────────────────────────────────────────── */}
           <SectionAnchor id="uc1"
-            title="Use Case 1: Simple Profiling — Baseline with Pareto Analysis"
+            title="Use Case 1: Simple Profiling - Baseline with Pareto Analysis"
             sub="Phase A/B · SGLang + vLLM single-GPU · 112-cell default sweep each" />
 
-          <Code>{`# Phase A — SGLang full default sweep
+          <Code>{`# Phase A - SGLang full default sweep
 python -m inference_optimizer sweep \\
     --engine sglang --model Qwen/Qwen3-8B \\
     --sglang-url http://localhost:30000 \\
     --output-dir ./results/sglang_default
 
-# Phase B — vLLM full default sweep
+# Phase B - vLLM full default sweep
 python -m inference_optimizer sweep \\
     --engine vllm --model Qwen/Qwen3-8B \\
     --vllm-url http://localhost:8000 \\
     --output-dir ./results/vllm_default`}</Code>
 
           {/* SGLang Pareto */}
-          <SubHeading>SGLang Pareto — ctx=1024, random</SubHeading>
+          <SubHeading>SGLang Pareto - ctx=1024, random</SubHeading>
           <p className="text-sm text-gray-500 mb-3">
             Full latency profile across concurrencies: TTFT, TPOT and E2E at p50/p90/p99, plus queue wait time.
           </p>
@@ -308,7 +308,7 @@ python -m inference_optimizer sweep \\
                     <Td mono right><MetricBadge val={r.tpot_p99} pass={r.tpot_p99 <= SLA.tpot_ms} /></Td>
                     <Td mono right>{r.e2e_p50.toLocaleString()}</Td>
                     <Td mono right>{r.e2e_p99.toLocaleString()}</Td>
-                    <Td mono right muted={r.q_p50 === 0}>{r.q_p50 > 0 ? r.q_p50.toLocaleString() : '—'}</Td>
+                    <Td mono right muted={r.q_p50 === 0}>{r.q_p50 > 0 ? r.q_p50.toLocaleString() : ''}</Td>
                     <Td><SlaTag pass={slaOk} /></Td>
                   </tr>
                 );
@@ -319,19 +319,19 @@ python -m inference_optimizer sweep \\
 
           <TwoUp>
             <ChartImg src="/benchmarks/throughput_curve_sglang_random.png"
-              alt="SGLang throughput — random" caption="Figure 1.1: SGLang throughput curve — random" />
+              alt="SGLang throughput - random" caption="Figure 1.1: SGLang throughput curve - random" />
             <ChartImg src="/benchmarks/latency_curve_sglang_random.png"
-              alt="SGLang latency — random" caption="Figure 1.2: SGLang latency curve — random" />
+              alt="SGLang latency - random" caption="Figure 1.2: SGLang latency curve - random" />
           </TwoUp>
           <TwoUp>
             <ChartImg src="/benchmarks/heatmap_ttft_p50_ms_sglang_random.png"
-              alt="SGLang TTFT heatmap" caption="Figure 1.3: TTFT p50 heatmap — SGLang (ctx × concurrency)" />
+              alt="SGLang TTFT heatmap" caption="Figure 1.3: TTFT p50 heatmap - SGLang (ctx × concurrency)" />
             <ChartImg src="/benchmarks/heatmap_tpot_p50_ms_sglang_random.png"
-              alt="SGLang TPOT heatmap" caption="Figure 1.4: TPOT p50 heatmap — SGLang (ctx × concurrency)" />
+              alt="SGLang TPOT heatmap" caption="Figure 1.4: TPOT p50 heatmap - SGLang (ctx × concurrency)" />
           </TwoUp>
 
           {/* vLLM Pareto */}
-          <SubHeading>vLLM Pareto — ctx=1024, random</SubHeading>
+          <SubHeading>vLLM Pareto - ctx=1024, random</SubHeading>
           <Table wide>
             <thead><tr>
               <Th>C</Th><Th>TPS</Th>
@@ -355,7 +355,7 @@ python -m inference_optimizer sweep \\
                     <Td mono right><MetricBadge val={r.tpot_p99} pass={r.tpot_p99 <= SLA.tpot_ms} /></Td>
                     <Td mono right>{r.e2e_p50.toLocaleString()}</Td>
                     <Td mono right>{r.e2e_p99.toLocaleString()}</Td>
-                    <Td mono right muted={r.q_p50 === 0}>{r.q_p50 > 0 ? r.q_p50.toLocaleString() : '—'}</Td>
+                    <Td mono right muted={r.q_p50 === 0}>{r.q_p50 > 0 ? r.q_p50.toLocaleString() : ''}</Td>
                     <Td><SlaTag pass={slaOk} /></Td>
                   </tr>
                 );
@@ -365,19 +365,19 @@ python -m inference_optimizer sweep \\
 
           <TwoUp>
             <ChartImg src="/benchmarks/throughput_curve_vllm_random.png"
-              alt="vLLM throughput — random" caption="Figure 1.5: vLLM throughput curve — random" />
+              alt="vLLM throughput - random" caption="Figure 1.5: vLLM throughput curve - random" />
             <ChartImg src="/benchmarks/latency_curve_vllm_random.png"
-              alt="vLLM latency — random" caption="Figure 1.6: vLLM latency curve — random" />
+              alt="vLLM latency - random" caption="Figure 1.6: vLLM latency curve - random" />
           </TwoUp>
           <TwoUp>
             <ChartImg src="/benchmarks/heatmap_ttft_p50_ms_vllm_random.png"
-              alt="vLLM TTFT heatmap" caption="Figure 1.7: TTFT p50 heatmap — vLLM (ctx × concurrency)" />
+              alt="vLLM TTFT heatmap" caption="Figure 1.7: TTFT p50 heatmap - vLLM (ctx × concurrency)" />
             <ChartImg src="/benchmarks/heatmap_tpot_p50_ms_vllm_random.png"
-              alt="vLLM TPOT heatmap" caption="Figure 1.8: TPOT p50 heatmap — vLLM (ctx × concurrency)" />
+              alt="vLLM TPOT heatmap" caption="Figure 1.8: TPOT p50 heatmap - vLLM (ctx × concurrency)" />
           </TwoUp>
 
           {/* Shared-prefix speedup */}
-          <SubHeading>Shared-Prefix vs Random TTFT Speedup — SGLang, c=4</SubHeading>
+          <SubHeading>Shared-Prefix vs Random TTFT Speedup - SGLang, c=4</SubHeading>
           <p className="text-sm text-gray-500 mb-3">
             SGLang RadixAttention reuses cached KV states for prompts sharing a common prefix,
             reducing TTFT dramatically at larger context lengths.
@@ -407,14 +407,14 @@ python -m inference_optimizer sweep \\
 
           <TwoUp>
             <ChartImg src="/benchmarks/throughput_curve_sglang_shared_prefix.png"
-              alt="SGLang throughput shared_prefix" caption="Figure 1.9: SGLang throughput — shared_prefix" />
+              alt="SGLang throughput shared_prefix" caption="Figure 1.9: SGLang throughput - shared_prefix" />
             <ChartImg src="/benchmarks/latency_curve_sglang_shared_prefix.png"
-              alt="SGLang latency shared_prefix" caption="Figure 1.10: SGLang latency — shared_prefix" />
+              alt="SGLang latency shared_prefix" caption="Figure 1.10: SGLang latency - shared_prefix" />
           </TwoUp>
 
           <KeyTakeaways items={[
-            'SGLang peaks at <strong>2,175 tok/s</strong>; vLLM at <strong>2,053 tok/s</strong> — both at ctx=1024 c=1.',
-            'All concurrencies tested (c=1 to c=128) pass every SLA threshold at ctx=1024 — no breaches on either engine.',
+            'SGLang peaks at <strong>2,175 tok/s</strong>; vLLM at <strong>2,053 tok/s</strong> - both at ctx=1024 c=1.',
+            'All concurrencies tested (c=1 to c=128) pass every SLA threshold at ctx=1024 - no breaches on either engine.',
             'TPOT p99 stays below <strong>15 ms</strong> even at c=128, far under the 50 ms SLA limit.',
             'Shared-prefix TTFT speedup grows with context: 1.3× at 4K → <strong>2.3×</strong> at 32K tokens.',
             'Queue wait time collapses from ~31 s at c=1 to ~0 at c=16 as the engine batches concurrent requests.',
@@ -422,11 +422,11 @@ python -m inference_optimizer sweep \\
 
           {/* ── UC2 ────────────────────────────────────────────────────── */}
           <SectionAnchor id="uc2"
-            title="Use Case 2: Custom Percentile Analysis — p90 / p99 Latency Tails"
-            sub="ctx=2048, c=8, random — all four latency metrics at p25/p50/p75/p90/p99" />
+            title="Use Case 2: Custom Percentile Analysis - p90 / p99 Latency Tails"
+            sub="ctx=2048, c=8, random - all four latency metrics at p25/p50/p75/p90/p99" />
 
           <p className="text-sm text-gray-600 mb-4">
-            Median (p50) metrics can look healthy while 1–10% of users experience unacceptable delays.
+            Median (p50) metrics can look healthy while 1-10% of users experience unacceptable delays.
             The table below shows TTFT, TPOT, E2E, and ITL (inter-token latency) across the full distribution.
           </p>
 
@@ -435,7 +435,7 @@ python -m inference_optimizer sweep \\
 python3 scripts/generate_report_metrics.py \\
     --results-dir ./results --output report_metrics.json`}</Code>
 
-          <SubHeading>Percentile breakdown — ctx=2048, c=8, random</SubHeading>
+          <SubHeading>Percentile breakdown - ctx=2048, c=8, random</SubHeading>
           <Table wide>
             <thead><tr>
               <Th>Pct</Th>
@@ -463,9 +463,9 @@ python3 scripts/generate_report_metrics.py \\
           <p className="text-[11px] text-gray-400 -mt-4 mb-6">SG = SGLang, vL = vLLM. ITL = inter-token latency mean. E2E includes TTFT + all token generation time.</p>
 
           <KeyTakeaways items={[
-            'SGLang TTFT p99 is <strong>~17% lower</strong> than vLLM at ctx=2048 c=8 (111 ms vs 134 ms) — better tail behaviour.',
-            'TPOT distribution is nearly identical between engines — both are HBM-bandwidth limited at this context.',
-            'E2E p99 stays under <strong>3,760 ms</strong> for both engines — well within the 10,000 ms SLA.',
+            'SGLang TTFT p99 is <strong>~17% lower</strong> than vLLM at ctx=2048 c=8 (111 ms vs 134 ms) - better tail behaviour.',
+            'TPOT distribution is nearly identical between engines - both are HBM-bandwidth limited at this context.',
+            'E2E p99 stays under <strong>3,760 ms</strong> for both engines - well within the 10,000 ms SLA.',
             'ITL (inter-token latency) is also nearly equal: SGLang 14.15 ms vs vLLM 14.26 ms at p99.',
           ]} />
 
@@ -474,7 +474,7 @@ python3 scripts/generate_report_metrics.py \\
             title="Use Case 3: Head-to-Head Engine Comparison"
             sub="Phase C · SGLang GPU 0 + vLLM GPU 1 · 112 cells × 2 engines simultaneously" />
 
-          <Code>{`# Phase C2 — full head-to-head sweep
+          <Code>{`# Phase C2 - full head-to-head sweep
 python -m inference_optimizer sweep \\
     --engine sglang vllm --model Qwen/Qwen3-8B \\
     --sglang-url http://localhost:30000 \\
@@ -483,24 +483,24 @@ python -m inference_optimizer sweep \\
 
           <TwoUp>
             <ChartImg src="/benchmarks/engine_comparison_all_random.png"
-              alt="Engine comparison random" caption="Figure 3.1: Engine comparison — random workload" />
+              alt="Engine comparison random" caption="Figure 3.1: Engine comparison - random workload" />
             <ChartImg src="/benchmarks/engine_comparison_all_shared_prefix.png"
-              alt="Engine comparison shared prefix" caption="Figure 3.2: Engine comparison — shared_prefix workload" />
+              alt="Engine comparison shared prefix" caption="Figure 3.2: Engine comparison - shared_prefix workload" />
           </TwoUp>
           <TwoUp>
             <ChartImg src="/benchmarks/heatmap_ttft_p50_ms_sglang_random.png"
-              alt="SGLang TTFT heatmap" caption="Figure 3.3: SGLang TTFT p50 heatmap — random" />
+              alt="SGLang TTFT heatmap" caption="Figure 3.3: SGLang TTFT p50 heatmap - random" />
             <ChartImg src="/benchmarks/heatmap_ttft_p50_ms_vllm_random.png"
-              alt="vLLM TTFT heatmap" caption="Figure 3.4: vLLM TTFT p50 heatmap — random" />
+              alt="vLLM TTFT heatmap" caption="Figure 3.4: vLLM TTFT p50 heatmap - random" />
           </TwoUp>
           <TwoUp>
             <ChartImg src="/benchmarks/heatmap_tpot_p50_ms_sglang_random.png"
-              alt="SGLang TPOT heatmap" caption="Figure 3.5: SGLang TPOT p50 heatmap — random" />
+              alt="SGLang TPOT heatmap" caption="Figure 3.5: SGLang TPOT p50 heatmap - random" />
             <ChartImg src="/benchmarks/heatmap_tpot_p50_ms_vllm_random.png"
-              alt="vLLM TPOT heatmap" caption="Figure 3.6: vLLM TPOT p50 heatmap — random" />
+              alt="vLLM TPOT heatmap" caption="Figure 3.6: vLLM TPOT p50 heatmap - random" />
           </TwoUp>
 
-          <SubHeading>Head-to-Head Results — key cells, random workload</SubHeading>
+          <SubHeading>Head-to-Head Results - key cells, random workload</SubHeading>
           <Table wide>
             <thead><tr>
               <Th>Engine</Th><Th>Ctx</Th><Th>C</Th>
@@ -533,16 +533,16 @@ python -m inference_optimizer sweep \\
           </Table>
 
           <KeyTakeaways items={[
-            'SGLang leads vLLM by ~4–6% on TPS across most configurations.',
-            'vLLM TTFT p50 is higher than SGLang at all tested cells — SGLang\'s prefill is more efficient at these context lengths.',
-            'E2E p99 stays under <strong>5,250 ms</strong> at all cells including c=32 — well within the 10,000 ms threshold.',
-            'TPOT p99 differences are small (≤2 ms) — both engines are decode-bandwidth limited.',
+            'SGLang leads vLLM by ~4-6% on TPS across most configurations.',
+            'vLLM TTFT p50 is higher than SGLang at all tested cells - SGLang\'s prefill is more efficient at these context lengths.',
+            'E2E p99 stays under <strong>5,250 ms</strong> at all cells including c=32 - well within the 10,000 ms threshold.',
+            'TPOT p99 differences are small (≤2 ms) - both engines are decode-bandwidth limited.',
             'At ctx=8192 c=1, both engines produce TTFT under 400 ms, comfortably within the 500 ms SLA.',
           ]} />
 
           {/* ── UC4 ────────────────────────────────────────────────────── */}
           <SectionAnchor id="uc4"
-            title="Use Case 4: Goodput Analysis — SLA Compliance"
+            title="Use Case 4: Goodput Analysis - SLA Compliance"
             sub="% of all requests meeting TTFT + TPOT + E2E simultaneously" />
 
           <Callout variant="info">
@@ -568,7 +568,7 @@ python -m inference_optimizer sweep \\
           </Table>
           <p className="text-xs text-gray-500 mb-4 -mt-2">This benchmark uses the <strong>Standard</strong> tier thresholds.</p>
 
-          <SubHeading>Goodput Table — key cells</SubHeading>
+          <SubHeading>Goodput Table - key cells</SubHeading>
           <Table wide>
             <thead><tr>
               <Th>Engine</Th><Th>Ctx</Th><Th>C</Th><Th>Workload</Th>
@@ -602,10 +602,10 @@ python -m inference_optimizer sweep \\
           </Table>
 
           <KeyTakeaways items={[
-            '100% goodput at all tested cells — every request meets TTFT, TPOT, and E2E SLA thresholds simultaneously.',
+            '100% goodput at all tested cells - every request meets TTFT, TPOT, and E2E SLA thresholds simultaneously.',
             'The closest E2E breach is SGLang ctx=8192 c=32 random: E2E p99 = <strong>9,057 ms</strong> (SLA limit = 10,000 ms).',
             'shared_prefix workload improves both TTFT and E2E significantly at the same ctx/concurrency.',
-            'Both engines show 100% success rate — no connection errors or timeouts in the final runs.',
+            'Both engines show 100% success rate - no connection errors or timeouts in the final runs.',
           ]} />
 
           {/* ── UC5 ────────────────────────────────────────────────────── */}
@@ -626,7 +626,7 @@ python -m inference_optimizer sweep \\
     --output-dir ./results/sglang_longctx`}</Code>
 
           <Callout variant="success">
-            <strong>RadixAttention delivers a 1,443× TTFT reduction at 131K tokens</strong> — 39 ms cached vs 55,565 ms cold.
+            <strong>RadixAttention delivers a 1,443× TTFT reduction at 131K tokens</strong> - 39 ms cached vs 55,565 ms cold.
             This unlocks sub-100 ms first-token latency at maximum context, critical for production RAG systems.
           </Callout>
 
@@ -653,7 +653,7 @@ python -m inference_optimizer sweep \\
                         ? <span className="inline-flex items-center gap-1 text-xs text-emerald-600 font-semibold">
                             <CheckCircle2 className="w-3 h-3" />RadixAttn hit
                           </span>
-                        : <span className="text-xs text-gray-400">Cold — full prefill</span>}
+                        : <span className="text-xs text-gray-400">Cold - full prefill</span>}
                     </Td>
                   </tr>
                 );
@@ -663,27 +663,27 @@ python -m inference_optimizer sweep \\
 
           <TwoUp>
             <ChartImg src="/benchmarks/longctx_throughput_random.png"
-              alt="Long-ctx throughput random" caption="Figure 5.1: Long-ctx throughput — random (cold)" />
+              alt="Long-ctx throughput random" caption="Figure 5.1: Long-ctx throughput - random (cold)" />
             <ChartImg src="/benchmarks/longctx_throughput_shared.png"
-              alt="Long-ctx throughput shared" caption="Figure 5.2: Long-ctx throughput — shared_prefix (cached)" />
+              alt="Long-ctx throughput shared" caption="Figure 5.2: Long-ctx throughput - shared_prefix (cached)" />
           </TwoUp>
           <TwoUp>
             <ChartImg src="/benchmarks/longctx_latency_shared.png"
-              alt="Long-ctx latency shared" caption="Figure 5.3: Long-ctx latency — shared_prefix" />
+              alt="Long-ctx latency shared" caption="Figure 5.3: Long-ctx latency - shared_prefix" />
             <ChartImg src="/benchmarks/throughput_curve_sglang_shared_prefix.png"
-              alt="SGLang shared_prefix throughput" caption="Figure 5.4: SGLang throughput — shared_prefix (all ctx)" />
+              alt="SGLang shared_prefix throughput" caption="Figure 5.4: SGLang throughput - shared_prefix (all ctx)" />
           </TwoUp>
 
           <KeyTakeaways items={[
             '<strong>1,443× TTFT reduction</strong> at 131K tokens on shared-prefix vs random workloads.',
-            'FP8 KV is essential — BF16 KV at 128K tokens would require 57 GB+, exceeding single-GPU capacity.',
-            'Shared-prefix TPS at 64K (1,007 tok/s) matches short-context performance — cache pays prefill cost once.',
+            'FP8 KV is essential - BF16 KV at 128K tokens would require 57 GB+, exceeding single-GPU capacity.',
+            'Shared-prefix TPS at 64K (1,007 tok/s) matches short-context performance - cache pays prefill cost once.',
             'For RAG: use SGLang with RadixAttention; even partial prefix sharing yields large TTFT reductions.',
           ]} />
 
           {/* ── UC6 ────────────────────────────────────────────────────── */}
           <SectionAnchor id="uc6"
-            title="Use Case 6: Tensor Parallelism TP=2 — NVLink Multi-GPU Scaling"
+            title="Use Case 6: Tensor Parallelism TP=2 - NVLink Multi-GPU Scaling"
             sub="Phase F · Both H100s · NVLink 4.0 · CUDA_VISIBLE_DEVICES=0,1" />
 
           <Code>{`# SGLang TP=2
@@ -726,16 +726,16 @@ CUDA_VISIBLE_DEVICES=0,1 vllm serve Qwen/Qwen3-8B \\
 
           <TwoUp>
             <ChartImg src="/benchmarks/throughput_curve_sglang_random.png"
-              alt="SGLang TP=1 throughput" caption="Figure 6.1: SGLang TP=1 throughput — random" />
+              alt="SGLang TP=1 throughput" caption="Figure 6.1: SGLang TP=1 throughput - random" />
             <ChartImg src="/benchmarks/throughput_curve_vllm_random.png"
-              alt="vLLM TP=1 throughput" caption="Figure 6.2: vLLM TP=1 throughput — random" />
+              alt="vLLM TP=1 throughput" caption="Figure 6.2: vLLM TP=1 throughput - random" />
           </TwoUp>
 
           <KeyTakeaways items={[
-            'TP=2 delivers <strong>2.63× (SGLang)</strong> and <strong>2.90× (vLLM)</strong> throughput — well above the 1.95× linear estimate.',
-            'Always use TP=2 on 2×H100 NVL — essentially free (no added GPU-hour cost per request).',
-            'TTFT p50 drops 33–35% under TP=2 due to parallelised prefill compute.',
-            'NVSwitch is not required — NVLink bridge alone achieves near-ideal scaling for 8B models.',
+            'TP=2 delivers <strong>2.63× (SGLang)</strong> and <strong>2.90× (vLLM)</strong> throughput - well above the 1.95× linear estimate.',
+            'Always use TP=2 on 2×H100 NVL - essentially free (no added GPU-hour cost per request).',
+            'TTFT p50 drops 33-35% under TP=2 due to parallelised prefill compute.',
+            'NVSwitch is not required - NVLink bridge alone achieves near-ideal scaling for 8B models.',
           ]} />
 
           {/* ── UC7 ────────────────────────────────────────────────────── */}
@@ -762,7 +762,7 @@ CUDA_VISIBLE_DEVICES=0,1 vllm serve Qwen/Qwen3-8B \\
                   <Td mono right><MetricBadge val={r.tpot_p99} pass={r.tpot_p99 <= SLA.tpot_ms} /></Td>
                   <Td mono right>{r.e2e_p99.toLocaleString()} ms</Td>
                   <Td mono right muted={r.q_p50 === 0}>
-                    {r.q_p50 > 0 ? r.q_p50.toLocaleString() : '—'} {r.q_p50 > 0 ? 'ms' : ''}
+                    {r.q_p50 > 0 ? r.q_p50.toLocaleString() : ''} {r.q_p50 > 0 ? 'ms' : ''}
                   </Td>
                   <Td><SlaTag pass={r.sla} /></Td>
                 </tr>
@@ -772,10 +772,10 @@ CUDA_VISIBLE_DEVICES=0,1 vllm serve Qwen/Qwen3-8B \\
           <p className="text-[11px] text-gray-400 -mt-4 mb-6">All latencies in ms. Queue p50 reflects serial queuing at low concurrency; drops to ~0 when the engine batches requests.</p>
 
           <KeyTakeaways items={[
-            'All eight concurrency slices (c=1 to c=128) pass every SLA threshold at ctx=1024 — no breaches.',
+            'All eight concurrency slices (c=1 to c=128) pass every SLA threshold at ctx=1024 - no breaches.',
             'TPOT p99 peaks at <strong>14.62 ms</strong> (c=64), well under the 50 ms SLA limit.',
             'E2E p99 peaks at <strong>4,618 ms</strong> (c=64), well under the 10,000 ms SLA limit.',
-            'TPS decreases after c=1 — the benchmark measures effective batch throughput; at c=1 requests serialise so per-unit tput dominates.',
+            'TPS decreases after c=1 - the benchmark measures effective batch throughput; at c=1 requests serialise so per-unit tput dominates.',
             'Queue wait time at c=1 (~31 s) reflects serial execution: each request waits for all previous to complete.',
           ]} />
 
@@ -788,7 +788,7 @@ CUDA_VISIBLE_DEVICES=0,1 vllm serve Qwen/Qwen3-8B \\
             <tbody>
               {[
                 ['prefill_compute',   'GPU saturated during prompt encoding',  'ctx > 8K, c=1'],
-                ['decode_bandwidth',  'HBM bandwidth limits token generation', 'ctx=512–2K, c=1–4'],
+                ['decode_bandwidth',  'HBM bandwidth limits token generation', 'ctx=512-2K, c=1-4'],
                 ['saturation',        'Request queue exceeds GPU capacity',    'c ≥ 32, any ctx'],
                 ['scheduler_queue',   'Requests wait in queue > GPU compute',  'c > 32, high ctx'],
                 ['kv_cache_capacity', 'KV evictions degrade throughput',       'ctx ≥ 16K, c ≥ 8'],
@@ -804,7 +804,7 @@ CUDA_VISIBLE_DEVICES=0,1 vllm serve Qwen/Qwen3-8B \\
           </Table>
 
           <ChartImg src="/benchmarks/bottleneck_distribution.png"
-            alt="Bottleneck distribution" caption="Figure 9.1: Bottleneck distribution — head-to-head full (224 cells). decode_bandwidth dominates at c≤8; saturation takes over at c≥32." />
+            alt="Bottleneck distribution" caption="Figure 9.1: Bottleneck distribution - head-to-head full (224 cells). decode_bandwidth dominates at c≤8; saturation takes over at c≥32." />
 
           {/* ── Summary ────────────────────────────────────────────────── */}
           <SectionAnchor id="summary" title="Summary & Recommendations" />
@@ -814,10 +814,10 @@ CUDA_VISIBLE_DEVICES=0,1 vllm serve Qwen/Qwen3-8B \\
               <p className="text-xs font-bold text-blue-600 uppercase tracking-wider mb-3">Choose SGLang when…</p>
               <ul className="space-y-2 text-sm text-blue-900">
                 {[
-                  'Repeated long system prompts (RAG, agents) — RadixAttention gives >1,000× TTFT reduction',
-                  'Predictable tail latency required — SGLang TTFT p99 is consistently lower under load',
-                  'Long-context inference (>32K) — FP8 KV + RadixAttention maximise effective throughput',
-                  'Lower TTFT across all contexts — SGLang prefill is faster at ctx=512 to 8K',
+                  'Repeated long system prompts (RAG, agents) - RadixAttention gives >1,000× TTFT reduction',
+                  'Predictable tail latency required - SGLang TTFT p99 is consistently lower under load',
+                  'Long-context inference (>32K) - FP8 KV + RadixAttention maximise effective throughput',
+                  'Lower TTFT across all contexts - SGLang prefill is faster at ctx=512 to 8K',
                 ].map((item, i) => (
                   <li key={i} className="flex gap-2">
                     <CheckCircle2 className="w-4 h-4 text-blue-500 mt-0.5 shrink-0" />
@@ -831,9 +831,9 @@ CUDA_VISIBLE_DEVICES=0,1 vllm serve Qwen/Qwen3-8B \\
               <ul className="space-y-2 text-sm text-orange-900">
                 {[
                   'Ecosystem integration: OpenAI-compatible API, structured-output, LoRA adapters',
-                  'NVLink TP=2 available — vLLM achieves higher scaling factor (2.90× vs 2.63×)',
+                  'NVLink TP=2 available - vLLM achieves higher scaling factor (2.90× vs 2.63×)',
                   'Batch pipelines where TTFT SLA is not the primary constraint',
-                  'Teams already invested in vLLM tooling — near-equivalent SLA compliance across all tested cells',
+                  'Teams already invested in vLLM tooling - near-equivalent SLA compliance across all tested cells',
                 ].map((item, i) => (
                   <li key={i} className="flex gap-2">
                     <CheckCircle2 className="w-4 h-4 text-orange-500 mt-0.5 shrink-0" />
@@ -848,12 +848,12 @@ CUDA_VISIBLE_DEVICES=0,1 vllm serve Qwen/Qwen3-8B \\
             <p className="text-xs font-bold text-teal-400 uppercase tracking-wider mb-3">Deployment Recommendations</p>
             <div className="space-y-3">
               {[
-                ['Use TP=2 on every 2×H100 NVL node', '2.63–2.90× throughput at zero added GPU-hour cost per request.'],
+                ['Use TP=2 on every 2×H100 NVL node', '2.63-2.90× throughput at zero added GPU-hour cost per request.'],
                 ['Cap concurrency at c=32 per instance', 'Beyond c=32 throughput plateaus and E2E p99 approaches 50% of the SLA limit.'],
-                ['Enable FP8 KV for ctx ≥ 32K', 'Halves KV memory — enables 128K context on a single 94 GB H100.'],
+                ['Enable FP8 KV for ctx ≥ 32K', 'Halves KV memory - enables 128K context on a single 94 GB H100.'],
                 ['Route long-context to SGLang', 'RadixAttention eliminates repeat prefill for RAG / agent patterns.'],
-                ['Alert on TPOT p99 > 45 ms', '90% of the SLA limit — time to react before users notice degradation.'],
-                ['Monitor E2E p99 at ctx=8K c=32', 'SGLang E2E p99 = 9,057 ms — closest measured cell to the 10,000 ms SLA boundary.'],
+                ['Alert on TPOT p99 > 45 ms', '90% of the SLA limit - time to react before users notice degradation.'],
+                ['Monitor E2E p99 at ctx=8K c=32', 'SGLang E2E p99 = 9,057 ms - closest measured cell to the 10,000 ms SLA boundary.'],
               ].map(([title, body]) => (
                 <div key={title} className="flex gap-3">
                   <TrendingUp className="w-4 h-4 text-teal-400 mt-0.5 shrink-0" />
