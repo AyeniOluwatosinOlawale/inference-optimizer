@@ -3,7 +3,8 @@ import Link from 'next/link';
 import { ExternalLink, Github, Cpu, Zap, Clock, TrendingUp, AlertTriangle, CheckCircle2, XCircle } from 'lucide-react';
 import {
   META, HEADLINE, SLA,
-  UC1_PARETO, UC2_PERCENTILES, UC3_HH, UC4_GOODPUT,
+  UC1_PARETO, UC1_VLLM_PARETO, UC1_PREFIX_SPEEDUP,
+  UC2_PERCENTILES, UC3_HH, UC4_GOODPUT,
   UC5_LONGCTX, UC6_TP2, UC7_SLICES,
 } from './data';
 
@@ -19,17 +20,25 @@ function SectionAnchor({ id, title, sub }: { id: string; title: string; sub?: st
   );
 }
 
+function SubHeading({ children }: { children: React.ReactNode }) {
+  return <h3 className="text-sm font-bold text-gray-700 mb-2 mt-5">{children}</h3>;
+}
+
 function MetricBadge({ val, pass }: { val: number; pass: boolean }) {
   return (
     <span className={`inline-flex items-center gap-1 font-mono text-xs font-semibold ${
       pass ? 'text-emerald-600' : 'text-red-600'
     }`}>
-      {pass
-        ? <CheckCircle2 className="w-3 h-3" />
-        : <XCircle className="w-3 h-3" />}
+      {pass ? <CheckCircle2 className="w-3 h-3" /> : <XCircle className="w-3 h-3" />}
       {val.toFixed(1)} ms
     </span>
   );
+}
+
+function SlaTag({ pass }: { pass: boolean }) {
+  return pass
+    ? <span className="inline-flex items-center gap-1 text-[11px] text-emerald-600 font-semibold"><CheckCircle2 className="w-3 h-3" />Pass</span>
+    : <span className="inline-flex items-center gap-1 text-[11px] text-red-600 font-semibold"><AlertTriangle className="w-3 h-3" />Breach</span>;
 }
 
 function EngineTag({ engine }: { engine: string }) {
@@ -51,23 +60,23 @@ function Th({ children }: { children: React.ReactNode }) {
   );
 }
 
-function Td({ children, mono, right, muted }: {
-  children: React.ReactNode; mono?: boolean; right?: boolean; muted?: boolean
+function Td({ children, mono, right, muted, warn }: {
+  children: React.ReactNode; mono?: boolean; right?: boolean; muted?: boolean; warn?: boolean
 }) {
   return (
     <td className={`px-3 py-2 text-xs border-b border-gray-100 ${
       mono  ? 'font-mono' : ''
     } ${right ? 'text-right' : 'text-left'
-    } ${muted ? 'text-gray-400' : 'text-gray-800'}`}>
+    } ${muted ? 'text-gray-400' : warn ? 'text-red-600 font-bold' : 'text-gray-800'}`}>
       {children}
     </td>
   );
 }
 
-function Table({ children }: { children: React.ReactNode }) {
+function Table({ children, wide }: { children: React.ReactNode; wide?: boolean }) {
   return (
     <div className="overflow-x-auto rounded-xl border border-gray-200 text-sm mb-6">
-      <table className="w-full min-w-[540px]">{children}</table>
+      <table className={`w-full ${wide ? 'min-w-[900px]' : 'min-w-[540px]'}`}>{children}</table>
     </div>
   );
 }
@@ -129,16 +138,16 @@ function Code({ children }: { children: string }) {
 
 // ─── Sidebar TOC ─────────────────────────────────────────────────────────────
 const TOC = [
-  { id: 'setup',  label: 'Setup' },
-  { id: 'uc1',    label: 'UC 1: Profiling & Pareto' },
-  { id: 'uc2',    label: 'UC 2: Percentile Analysis' },
-  { id: 'uc3',    label: 'UC 3: Engine Comparison' },
-  { id: 'uc4',    label: 'UC 4: Goodput / SLA' },
-  { id: 'uc5',    label: 'UC 5: Long-Context' },
-  { id: 'uc6',    label: 'UC 6: Tensor Parallel TP=2' },
-  { id: 'uc7',    label: 'UC 7: Saturation Analysis' },
+  { id: 'setup',      label: 'Setup' },
+  { id: 'uc1',        label: 'UC 1: Profiling & Pareto' },
+  { id: 'uc2',        label: 'UC 2: Percentile Analysis' },
+  { id: 'uc3',        label: 'UC 3: Engine Comparison' },
+  { id: 'uc4',        label: 'UC 4: Goodput / SLA' },
+  { id: 'uc5',        label: 'UC 5: Long-Context' },
+  { id: 'uc6',        label: 'UC 6: Tensor Parallel TP=2' },
+  { id: 'uc7',        label: 'UC 7: Saturation Analysis' },
   { id: 'bottleneck', label: 'Bottleneck Classification' },
-  { id: 'summary', label: 'Summary' },
+  { id: 'summary',    label: 'Summary' },
 ];
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
@@ -165,8 +174,6 @@ export default function LLMBenchmarkPage() {
             single-GPU sweeps, head-to-head comparison, long-context RadixAttention,
             and NVLink TP=2 multi-GPU scaling.
           </p>
-
-          {/* Meta row */}
           <div className="flex flex-wrap gap-4 text-xs text-slate-400 mb-8">
             {[
               ['Model', META.model],
@@ -180,8 +187,6 @@ export default function LLMBenchmarkPage() {
               <Github className="w-3.5 h-3.5" />Source
             </a>
           </div>
-
-          {/* Headline stats grid */}
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
             {HEADLINE.map(h => (
               <div key={h.label} className="bg-white/5 border border-white/10 rounded-xl p-3">
@@ -208,7 +213,7 @@ export default function LLMBenchmarkPage() {
         </div>
       </div>
 
-      {/* ── Body: sidebar + content ──────────────────────────────────────── */}
+      {/* ── Body ─────────────────────────────────────────────────────────── */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 flex gap-8">
 
         {/* Sidebar TOC */}
@@ -238,24 +243,21 @@ export default function LLMBenchmarkPage() {
 
           {/* ── Setup ──────────────────────────────────────────────────── */}
           <SectionAnchor id="setup" title="Setup: Test Endpoint Details" />
-
           <Table>
-            <thead><tr>
-              <Th>Component</Th><Th>Specification</Th>
-            </tr></thead>
+            <thead><tr><Th>Component</Th><Th>Specification</Th></tr></thead>
             <tbody>
               {[
                 ['GPUs', '2 × NVIDIA H100 NVL 94 GB HBM3'],
                 ['Interconnect', 'NVLink 4.0 (bridge topology · 900 GB/s bidirectional)'],
                 ['CUDA', '13.4'],
-                ['SGLang', 'v0.5.20 — latest stable (Sep 18 2026) · RadixAttention · FP8 KV'],
-                ['vLLM', 'v0.30.0 — latest stable (Sep 22 2026) · PagedKV · ContinuousBatching'],
-                ['Model', 'Qwen/Qwen3-8B — 8B params · 128K native context · BF16 weights'],
-                ['Cells / sweep', '112 default · 28 peak · 12 quick · 20 requests/cell'],
+                ['SGLang', 'v0.5.20 · RadixAttention · FP8 KV'],
+                ['vLLM', 'v0.30.0 · PagedKV · ContinuousBatching'],
+                ['Model', 'Qwen/Qwen3-8B · 8B params · 128K native context · BF16 weights'],
+                ['Cells / sweep', '112 default (7 ctx × 8 concurrency × 2 workloads) · 20 requests/cell'],
               ].map(([k, v]) => (
                 <tr key={k} className="even:bg-gray-50">
                   <Td><span className="font-semibold text-gray-700">{k}</span></Td>
-                  <Td muted={false}>{v}</Td>
+                  <Td>{v}</Td>
                 </tr>
               ))}
             </tbody>
@@ -263,45 +265,98 @@ export default function LLMBenchmarkPage() {
 
           {/* ── UC1 ────────────────────────────────────────────────────── */}
           <SectionAnchor id="uc1"
-            title="Use Case 1: Simple Profiling — SGLang Baseline with Pareto Analysis"
-            sub="Phase A · SGLang single GPU · 112-cell default sweep" />
+            title="Use Case 1: Simple Profiling — Baseline with Pareto Analysis"
+            sub="Phase A/B · SGLang + vLLM single-GPU · 112-cell default sweep each" />
 
-          <Code>{`# Phase A3 — SGLang full default sweep
+          <Code>{`# Phase A — SGLang full default sweep
 python -m inference_optimizer sweep \\
     --engine sglang --model Qwen/Qwen3-8B \\
     --sglang-url http://localhost:30000 \\
-    --output-dir ./results/sglang_default`}</Code>
+    --output-dir ./results/sglang_default
 
-          <h3 className="text-sm font-bold text-gray-700 mb-2">Pareto Curve — ctx=1024, random</h3>
+# Phase B — vLLM full default sweep
+python -m inference_optimizer sweep \\
+    --engine vllm --model Qwen/Qwen3-8B \\
+    --vllm-url http://localhost:8000 \\
+    --output-dir ./results/vllm_default`}</Code>
+
+          {/* SGLang Pareto */}
+          <SubHeading>SGLang Pareto — ctx=1024, random</SubHeading>
           <p className="text-sm text-gray-500 mb-3">
-            Sweeping concurrency from 1 to 64 reveals the throughput–latency trade-off.
-            Higher concurrency increases TPS by batching, but raises queuing delay and TPOT.
+            Full latency profile across concurrencies: TTFT, TPOT and E2E at p50/p90/p99, plus queue wait time.
           </p>
-          <Table>
+          <Table wide>
             <thead><tr>
-              <Th>Concurrency</Th><Th>TPS</Th><Th>TTFT p50</Th><Th>TPOT p50</Th><Th>TPOT p99</Th><Th>Trade-off</Th>
+              <Th>C</Th><Th>TPS</Th>
+              <Th>TTFT p50</Th><Th>TTFT p90</Th><Th>TTFT p99</Th>
+              <Th>TPOT p50</Th><Th>TPOT p90</Th><Th>TPOT p99</Th>
+              <Th>E2E p50</Th><Th>E2E p99</Th>
+              <Th>Queue p50</Th><Th>SLA</Th>
             </tr></thead>
             <tbody>
               {UC1_PARETO.map(r => {
-                const slaOk = r.tpot_p99 <= SLA.tpot_ms;
+                const slaOk = r.tpot_p99 <= SLA.tpot_ms && r.ttft_p50 <= SLA.ttft_ms && r.e2e_p99 <= SLA.e2e_ms;
                 return (
-                  <tr key={r.c} className={`even:bg-gray-50 ${!slaOk ? 'bg-red-50!' : ''}`}>
+                  <tr key={r.c} className={`even:bg-gray-50 ${!slaOk ? 'bg-red-50' : ''}`}>
                     <Td mono><span className="font-bold">{r.c}</span></Td>
-                    <Td mono right>{r.tps.toLocaleString()}</Td>
-                    <Td mono right>{r.ttft_p50} ms</Td>
-                    <Td mono right>{r.tpot_p50} ms</Td>
-                    <Td mono right>
-                      <MetricBadge val={r.tpot_p99} pass={slaOk} />
-                    </Td>
-                    <Td>
-                      <span className={`text-xs ${
-                        r.tier.includes('risk') || r.tier.includes('Sat')
-                          ? 'text-red-600 font-semibold'
-                          : r.tier === 'Balanced'
-                            ? 'text-emerald-700 font-medium'
-                            : 'text-gray-600'
-                      }`}>{r.tier}</span>
-                    </Td>
+                    <Td mono right><span className="font-bold">{r.tps.toLocaleString()}</span></Td>
+                    <Td mono right>{r.ttft_p50}</Td>
+                    <Td mono right>{r.ttft_p90}</Td>
+                    <Td mono right>{r.ttft_p99}</Td>
+                    <Td mono right>{r.tpot_p50}</Td>
+                    <Td mono right>{r.tpot_p90}</Td>
+                    <Td mono right><MetricBadge val={r.tpot_p99} pass={r.tpot_p99 <= SLA.tpot_ms} /></Td>
+                    <Td mono right>{r.e2e_p50.toLocaleString()}</Td>
+                    <Td mono right>{r.e2e_p99.toLocaleString()}</Td>
+                    <Td mono right muted={r.q_p50 === 0}>{r.q_p50 > 0 ? r.q_p50.toLocaleString() : '—'}</Td>
+                    <Td><SlaTag pass={slaOk} /></Td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </Table>
+          <p className="text-[11px] text-gray-400 -mt-4 mb-6">All latencies in ms. Queue p50 = median request queue-wait time; high at low concurrency because requests run serially.</p>
+
+          <TwoUp>
+            <ChartImg src="/benchmarks/throughput_curve_sglang_random.png"
+              alt="SGLang throughput — random" caption="Figure 1.1: SGLang throughput curve — random" />
+            <ChartImg src="/benchmarks/latency_curve_sglang_random.png"
+              alt="SGLang latency — random" caption="Figure 1.2: SGLang latency curve — random" />
+          </TwoUp>
+          <TwoUp>
+            <ChartImg src="/benchmarks/heatmap_ttft_p50_ms_sglang_random.png"
+              alt="SGLang TTFT heatmap" caption="Figure 1.3: TTFT p50 heatmap — SGLang (ctx × concurrency)" />
+            <ChartImg src="/benchmarks/heatmap_tpot_p50_ms_sglang_random.png"
+              alt="SGLang TPOT heatmap" caption="Figure 1.4: TPOT p50 heatmap — SGLang (ctx × concurrency)" />
+          </TwoUp>
+
+          {/* vLLM Pareto */}
+          <SubHeading>vLLM Pareto — ctx=1024, random</SubHeading>
+          <Table wide>
+            <thead><tr>
+              <Th>C</Th><Th>TPS</Th>
+              <Th>TTFT p50</Th><Th>TTFT p90</Th><Th>TTFT p99</Th>
+              <Th>TPOT p50</Th><Th>TPOT p90</Th><Th>TPOT p99</Th>
+              <Th>E2E p50</Th><Th>E2E p99</Th>
+              <Th>Queue p50</Th><Th>SLA</Th>
+            </tr></thead>
+            <tbody>
+              {UC1_VLLM_PARETO.map(r => {
+                const slaOk = r.tpot_p99 <= SLA.tpot_ms && r.ttft_p50 <= SLA.ttft_ms && r.e2e_p99 <= SLA.e2e_ms;
+                return (
+                  <tr key={r.c} className={`even:bg-gray-50 ${!slaOk ? 'bg-red-50' : ''}`}>
+                    <Td mono><span className="font-bold">{r.c}</span></Td>
+                    <Td mono right><span className="font-bold">{r.tps.toLocaleString()}</span></Td>
+                    <Td mono right>{r.ttft_p50}</Td>
+                    <Td mono right>{r.ttft_p90}</Td>
+                    <Td mono right>{r.ttft_p99}</Td>
+                    <Td mono right>{r.tpot_p50}</Td>
+                    <Td mono right>{r.tpot_p90}</Td>
+                    <Td mono right><MetricBadge val={r.tpot_p99} pass={r.tpot_p99 <= SLA.tpot_ms} /></Td>
+                    <Td mono right>{r.e2e_p50.toLocaleString()}</Td>
+                    <Td mono right>{r.e2e_p99.toLocaleString()}</Td>
+                    <Td mono right muted={r.q_p50 === 0}>{r.q_p50 > 0 ? r.q_p50.toLocaleString() : '—'}</Td>
+                    <Td><SlaTag pass={slaOk} /></Td>
                   </tr>
                 );
               })}
@@ -309,47 +364,85 @@ python -m inference_optimizer sweep \\
           </Table>
 
           <TwoUp>
-            <ChartImg src="/benchmarks/sglang_throughput_random.png"
-              alt="SGLang throughput — random" caption="Figure 1.1: SGLang throughput curve — random" />
-            <ChartImg src="/benchmarks/sglang_latency_random.png"
-              alt="SGLang latency — random" caption="Figure 1.2: SGLang latency curve — random" />
+            <ChartImg src="/benchmarks/throughput_curve_vllm_random.png"
+              alt="vLLM throughput — random" caption="Figure 1.5: vLLM throughput curve — random" />
+            <ChartImg src="/benchmarks/latency_curve_vllm_random.png"
+              alt="vLLM latency — random" caption="Figure 1.6: vLLM latency curve — random" />
           </TwoUp>
           <TwoUp>
-            <ChartImg src="/benchmarks/sglang_heatmap_ttft.png"
-              alt="SGLang TTFT heatmap" caption="Figure 1.3: TTFT p50 heatmap (ctx × concurrency)" />
-            <ChartImg src="/benchmarks/sglang_heatmap_tpot.png"
-              alt="SGLang TPOT heatmap" caption="Figure 1.4: TPOT p50 heatmap (ctx × concurrency)" />
+            <ChartImg src="/benchmarks/heatmap_ttft_p50_ms_vllm_random.png"
+              alt="vLLM TTFT heatmap" caption="Figure 1.7: TTFT p50 heatmap — vLLM (ctx × concurrency)" />
+            <ChartImg src="/benchmarks/heatmap_tpot_p50_ms_vllm_random.png"
+              alt="vLLM TPOT heatmap" caption="Figure 1.8: TPOT p50 heatmap — vLLM (ctx × concurrency)" />
+          </TwoUp>
+
+          {/* Shared-prefix speedup */}
+          <SubHeading>Shared-Prefix vs Random TTFT Speedup — SGLang, c=4</SubHeading>
+          <p className="text-sm text-gray-500 mb-3">
+            SGLang RadixAttention reuses cached KV states for prompts sharing a common prefix,
+            reducing TTFT dramatically at larger context lengths.
+          </p>
+          <Table>
+            <thead><tr>
+              <Th>Context</Th>
+              <Th>Random TTFT p50</Th><Th>Random TTFT p99</Th>
+              <Th>Prefix TTFT p50</Th><Th>Prefix TTFT p99</Th>
+              <Th>Speedup</Th>
+            </tr></thead>
+            <tbody>
+              {UC1_PREFIX_SPEEDUP.map(r => (
+                <tr key={r.ctx} className="even:bg-gray-50">
+                  <Td mono>{r.ctx.toLocaleString()} tok</Td>
+                  <Td mono right>{r.rand_ttft_p50} ms</Td>
+                  <Td mono right>{r.rand_ttft_p99} ms</Td>
+                  <Td mono right><span className="text-emerald-600 font-bold">{r.pref_ttft_p50} ms</span></Td>
+                  <Td mono right>{r.pref_ttft_p99} ms</Td>
+                  <Td mono right>
+                    <span className="text-teal-700 font-extrabold">{r.speedup}×</span>
+                  </Td>
+                </tr>
+              ))}
+            </tbody>
+          </Table>
+
+          <TwoUp>
+            <ChartImg src="/benchmarks/throughput_curve_sglang_shared_prefix.png"
+              alt="SGLang throughput shared_prefix" caption="Figure 1.9: SGLang throughput — shared_prefix" />
+            <ChartImg src="/benchmarks/latency_curve_sglang_shared_prefix.png"
+              alt="SGLang latency shared_prefix" caption="Figure 1.10: SGLang latency — shared_prefix" />
           </TwoUp>
 
           <KeyTakeaways items={[
-            'SGLang achieves peak <strong>2,148 tok/s</strong> at ctx=1024 c=1 — decode-bandwidth bound.',
-            'Optimal operating point is <strong>c=4–8</strong>: 80% of peak TPS at 2× lower TTFT.',
-            'Saturation cliff at <strong>c=32</strong>: TPOT p99 crosses the 50 ms SLA limit.',
-            'Shared-prefix TTFT is 8–12× lower than random at the same context length.',
+            'SGLang peaks at <strong>2,175 tok/s</strong>; vLLM at <strong>2,053 tok/s</strong> — both at ctx=1024 c=1.',
+            'All concurrencies tested (c=1 to c=128) pass every SLA threshold at ctx=1024 — no breaches on either engine.',
+            'TPOT p99 stays below <strong>15 ms</strong> even at c=128, far under the 50 ms SLA limit.',
+            'Shared-prefix TTFT speedup grows with context: 1.3× at 4K → <strong>2.3×</strong> at 32K tokens.',
+            'Queue wait time collapses from ~31 s at c=1 to ~0 at c=16 as the engine batches concurrent requests.',
           ]} />
 
           {/* ── UC2 ────────────────────────────────────────────────────── */}
           <SectionAnchor id="uc2"
             title="Use Case 2: Custom Percentile Analysis — p90 / p99 Latency Tails"
-            sub="Why p50 metrics are insufficient for production SLA design" />
+            sub="ctx=2048, c=8, random — all four latency metrics at p25/p50/p75/p90/p99" />
 
           <p className="text-sm text-gray-600 mb-4">
             Median (p50) metrics can look healthy while 1–10% of users experience unacceptable delays.
-            Each result folder contains a timestamped <code className="bg-gray-100 px-1 rounded text-xs">*.json</code> with
-            per-request records enabling arbitrary percentile analysis.
+            The table below shows TTFT, TPOT, E2E, and ITL (inter-token latency) across the full distribution.
           </p>
 
-          <Code>{`# Generate p50/p95/p99 + goodput for all result folders:
+          <Code>{`# Per-request records contain all four latency fields:
+# ttft_ms, tpot_ms, itl_mean_ms, e2e_ms, queue_ms
 python3 scripts/generate_report_metrics.py \\
-    --results-dir ./results \\
-    --output report_metrics.json`}</Code>
+    --results-dir ./results --output report_metrics.json`}</Code>
 
-          <h3 className="text-sm font-bold text-gray-700 mb-2">Percentile breakdown — ctx=2048, c=8, random</h3>
-          <Table>
+          <SubHeading>Percentile breakdown — ctx=2048, c=8, random</SubHeading>
+          <Table wide>
             <thead><tr>
-              <Th>Percentile</Th>
-              <Th>SGLang TTFT</Th><Th>vLLM TTFT</Th>
-              <Th>SGLang TPOT</Th><Th>vLLM TPOT</Th>
+              <Th>Pct</Th>
+              <Th>SG TTFT</Th><Th>vL TTFT</Th>
+              <Th>SG TPOT</Th><Th>vL TPOT</Th>
+              <Th>SG E2E</Th><Th>vL E2E</Th>
+              <Th>SG ITL</Th><Th>vL ITL</Th>
             </tr></thead>
             <tbody>
               {UC2_PERCENTILES.map(r => (
@@ -359,16 +452,21 @@ python3 scripts/generate_report_metrics.py \\
                   <Td mono right>{r.vllm_ttft} ms</Td>
                   <Td mono right>{r.sglang_tpot} ms</Td>
                   <Td mono right>{r.vllm_tpot} ms</Td>
+                  <Td mono right>{r.sglang_e2e.toLocaleString()} ms</Td>
+                  <Td mono right>{r.vllm_e2e.toLocaleString()} ms</Td>
+                  <Td mono right>{r.sglang_itl} ms</Td>
+                  <Td mono right>{r.vllm_itl} ms</Td>
                 </tr>
               ))}
             </tbody>
           </Table>
+          <p className="text-[11px] text-gray-400 -mt-4 mb-6">SG = SGLang, vL = vLLM. ITL = inter-token latency mean. E2E includes TTFT + all token generation time.</p>
 
           <KeyTakeaways items={[
-            'p99 TTFT is the SLA gate — p50 can look healthy while p99 breaches the threshold.',
-            'SGLang p99 TTFT is ~15% lower than vLLM at ctx=2048 c=8 — better tail behaviour under load.',
-            'TPOT tails are nearly identical between engines at the same concurrency — both are HBM-bandwidth limited.',
-            'Raw JSONL output enables arbitrary custom percentile analysis beyond the standard set.',
+            'SGLang TTFT p99 is <strong>~17% lower</strong> than vLLM at ctx=2048 c=8 (111 ms vs 134 ms) — better tail behaviour.',
+            'TPOT distribution is nearly identical between engines — both are HBM-bandwidth limited at this context.',
+            'E2E p99 stays under <strong>3,760 ms</strong> for both engines — well within the 10,000 ms SLA.',
+            'ITL (inter-token latency) is also nearly equal: SGLang 14.15 ms vs vLLM 14.26 ms at p99.',
           ]} />
 
           {/* ── UC3 ────────────────────────────────────────────────────── */}
@@ -391,40 +489,43 @@ python -m inference_optimizer sweep \\
           </TwoUp>
           <TwoUp>
             <ChartImg src="/benchmarks/heatmap_ttft_p50_ms_sglang_random.png"
-              alt="SGLang TTFT heatmap" caption="Figure 3.3: SGLang TTFT p50 heatmap" />
+              alt="SGLang TTFT heatmap" caption="Figure 3.3: SGLang TTFT p50 heatmap — random" />
             <ChartImg src="/benchmarks/heatmap_ttft_p50_ms_vllm_random.png"
-              alt="vLLM TTFT heatmap" caption="Figure 3.4: vLLM TTFT p50 heatmap" />
+              alt="vLLM TTFT heatmap" caption="Figure 3.4: vLLM TTFT p50 heatmap — random" />
+          </TwoUp>
+          <TwoUp>
+            <ChartImg src="/benchmarks/heatmap_tpot_p50_ms_sglang_random.png"
+              alt="SGLang TPOT heatmap" caption="Figure 3.5: SGLang TPOT p50 heatmap — random" />
+            <ChartImg src="/benchmarks/heatmap_tpot_p50_ms_vllm_random.png"
+              alt="vLLM TPOT heatmap" caption="Figure 3.6: vLLM TPOT p50 heatmap — random" />
           </TwoUp>
 
-          <h3 className="text-sm font-bold text-gray-700 mb-2">Head-to-Head Results — key cells, random workload</h3>
-          <Table>
+          <SubHeading>Head-to-Head Results — key cells, random workload</SubHeading>
+          <Table wide>
             <thead><tr>
               <Th>Engine</Th><Th>Ctx</Th><Th>C</Th>
-              <Th>TPS</Th><Th>TTFT p50</Th><Th>TTFT p99</Th>
+              <Th>TPS</Th>
+              <Th>TTFT p50</Th><Th>TTFT p99</Th>
               <Th>TPOT p50</Th><Th>TPOT p99</Th>
+              <Th>E2E p50</Th><Th>E2E p99</Th>
             </tr></thead>
             <tbody>
               {UC3_HH.map((r, i) => {
                 const ttftBreach = r.ttft_p50 > SLA.ttft_ms;
                 const tpotBreach = r.tpot_p99 > SLA.tpot_ms;
+                const e2eBreach  = r.e2e_p99  > SLA.e2e_ms;
                 return (
                   <tr key={i} className="even:bg-gray-50">
                     <Td><EngineTag engine={r.engine} /></Td>
                     <Td mono right>{r.ctx.toLocaleString()}</Td>
                     <Td mono right>{r.c}</Td>
                     <Td mono right><span className="font-bold">{r.tps.toLocaleString()}</span></Td>
-                    <Td mono right>
-                      {ttftBreach
-                        ? <span className="text-red-600 font-bold">{r.ttft_p50} ms ⚠</span>
-                        : `${r.ttft_p50} ms`}
-                    </Td>
+                    <Td mono right warn={ttftBreach}>{r.ttft_p50}{ttftBreach ? ' ⚠' : ''} ms</Td>
                     <Td mono right>{r.ttft_p99} ms</Td>
                     <Td mono right>{r.tpot_p50} ms</Td>
-                    <Td mono right>
-                      {tpotBreach
-                        ? <span className="text-red-600 font-bold">{r.tpot_p99} ms ⚠</span>
-                        : `${r.tpot_p99} ms`}
-                    </Td>
+                    <Td mono right warn={tpotBreach}>{r.tpot_p99}{tpotBreach ? ' ⚠' : ''} ms</Td>
+                    <Td mono right>{r.e2e_p50.toLocaleString()} ms</Td>
+                    <Td mono right warn={e2eBreach}>{r.e2e_p99.toLocaleString()}{e2eBreach ? ' ⚠' : ''} ms</Td>
                   </tr>
                 );
               })}
@@ -432,78 +533,68 @@ python -m inference_optimizer sweep \\
           </Table>
 
           <KeyTakeaways items={[
-            'SGLang leads by ~4% peak TPS (2,148 vs 2,058 tok/s) at ctx=1024 random.',
-            'vLLM achieves 7% lower median TTFT at ctx=1024 c=1 (43 ms vs 46 ms) — eager prefill scheduling.',
-            'SGLang RadixAttention reduces shared-prefix TTFT by 6–8× vs random at ctx=8192.',
-            'vLLM TTFT p50 = <strong>521 ms</strong> at ctx=8192 c=1 — breaches the 500 ms SLA threshold.',
-            'TPOT tails are near-identical at same concurrency — both engines are HBM-bandwidth bound.',
+            'SGLang leads vLLM by ~4–6% on TPS across most configurations.',
+            'vLLM TTFT p50 is higher than SGLang at all tested cells — SGLang\'s prefill is more efficient at these context lengths.',
+            'E2E p99 stays under <strong>5,250 ms</strong> at all cells including c=32 — well within the 10,000 ms threshold.',
+            'TPOT p99 differences are small (≤2 ms) — both engines are decode-bandwidth limited.',
+            'At ctx=8192 c=1, both engines produce TTFT under 400 ms, comfortably within the 500 ms SLA.',
           ]} />
 
           {/* ── UC4 ────────────────────────────────────────────────────── */}
           <SectionAnchor id="uc4"
             title="Use Case 4: Goodput Analysis — SLA Compliance"
-            sub="% of all requests meeting every SLA threshold simultaneously" />
+            sub="% of all requests meeting TTFT + TPOT + E2E simultaneously" />
 
           <Callout variant="info">
             <strong>Goodput</strong> = requests meeting TTFT ≤ {SLA.ttft_ms} ms <em>AND</em> E2E ≤ {SLA.e2e_ms.toLocaleString()} ms <em>AND</em> TPOT ≤ {SLA.tpot_ms} ms,
             as a fraction of <em>all submitted</em> requests (including errors and timeouts).
           </Callout>
 
-          <h3 className="text-sm font-bold text-gray-700 mb-2">SLO Tier Guidance</h3>
+          <SubHeading>SLO Tier Guidance</SubHeading>
           <Table>
-            <thead><tr><Th>Tier</Th><Th>TTFT SLO</Th><Th>TPOT SLO</Th><Th>Use Case</Th></tr></thead>
+            <thead><tr><Th>Tier</Th><Th>TTFT SLO</Th><Th>TPOT SLO</Th><Th>E2E SLO</Th><Th>Use Case</Th></tr></thead>
             <tbody>
               {[
-                ['Premium',  '≤ 200 ms', '≤ 20 ms',  'Real-time chat · voice · copilot'],
-                ['Standard', '≤ 500 ms', '≤ 50 ms',  'Document Q&A · search · RAG'],
-                ['Batch',    '≤ 5,000 ms','≤ 200 ms', 'Summarisation · offline labelling'],
-              ].map(([tier, ttft, tpot, uc]) => (
+                ['Premium',  '≤ 200 ms',   '≤ 20 ms',  '≤ 5,000 ms',  'Real-time chat · voice · copilot'],
+                ['Standard', '≤ 500 ms',   '≤ 50 ms',  '≤ 10,000 ms', 'Document Q&A · search · RAG'],
+                ['Batch',    '≤ 5,000 ms', '≤ 200 ms', '≤ 60,000 ms', 'Summarisation · offline labelling'],
+              ].map(([tier, ttft, tpot, e2e, uc]) => (
                 <tr key={tier} className="even:bg-gray-50">
                   <Td><span className="font-bold">{tier}</span></Td>
-                  <Td mono>{ttft}</Td><Td mono>{tpot}</Td><Td muted={false}>{uc}</Td>
+                  <Td mono>{ttft}</Td><Td mono>{tpot}</Td><Td mono>{e2e}</Td><Td muted={false}>{uc}</Td>
                 </tr>
               ))}
             </tbody>
           </Table>
           <p className="text-xs text-gray-500 mb-4 -mt-2">This benchmark uses the <strong>Standard</strong> tier thresholds.</p>
 
-          <h3 className="text-sm font-bold text-gray-700 mb-2">Goodput Table — key cells</h3>
-          <Table>
+          <SubHeading>Goodput Table — key cells</SubHeading>
+          <Table wide>
             <thead><tr>
               <Th>Engine</Th><Th>Ctx</Th><Th>C</Th><Th>Workload</Th>
               <Th>Success%</Th><Th>Goodput%</Th>
-              <Th>TTFT p50</Th><Th>TTFT p99</Th><Th>TPOT p99</Th>
+              <Th>TTFT p50</Th><Th>TTFT p99</Th><Th>TPOT p99</Th><Th>E2E p99</Th>
             </tr></thead>
             <tbody>
               {UC4_GOODPUT.map((r, i) => {
                 const ttftFail = r.ttft_p50 > SLA.ttft_ms;
                 const tpotFail = r.tpot_p99 > SLA.tpot_ms;
+                const e2eFail  = r.e2e_p99  > SLA.e2e_ms;
                 const gputLow  = r.goodput < 90;
                 return (
                   <tr key={i} className="even:bg-gray-50">
                     <Td><EngineTag engine={r.engine} /></Td>
                     <Td mono right>{r.ctx.toLocaleString()}</Td>
                     <Td mono right>{r.c}</Td>
-                    <Td>
-                      <span className="text-xs text-gray-600">{r.wl}</span>
-                    </Td>
+                    <Td><span className="text-xs text-gray-600">{r.wl}</span></Td>
                     <Td mono right>{r.ok}%</Td>
                     <Td mono right>
-                      <span className={`font-bold ${gputLow ? 'text-red-600' : 'text-emerald-600'}`}>
-                        {r.goodput}%
-                      </span>
+                      <span className={`font-bold ${gputLow ? 'text-red-600' : 'text-emerald-600'}`}>{r.goodput}%</span>
                     </Td>
-                    <Td mono right>
-                      {ttftFail
-                        ? <span className="text-red-600 font-bold">{r.ttft_p50} ms ⚠</span>
-                        : `${r.ttft_p50} ms`}
-                    </Td>
+                    <Td mono right warn={ttftFail}>{r.ttft_p50}{ttftFail ? ' ⚠' : ''} ms</Td>
                     <Td mono right>{r.ttft_p99} ms</Td>
-                    <Td mono right>
-                      {tpotFail
-                        ? <span className="text-red-600 font-bold">{r.tpot_p99} ms ⚠</span>
-                        : `${r.tpot_p99} ms`}
-                    </Td>
+                    <Td mono right warn={tpotFail}>{r.tpot_p99}{tpotFail ? ' ⚠' : ''} ms</Td>
+                    <Td mono right warn={e2eFail}>{r.e2e_p99.toLocaleString()}{e2eFail ? ' ⚠' : ''} ms</Td>
                   </tr>
                 );
               })}
@@ -511,10 +602,10 @@ python -m inference_optimizer sweep \\
           </Table>
 
           <KeyTakeaways items={[
-            'vLLM goodput drops to <strong>10%</strong> at ctx=8192 c=1 random — TTFT p50 = 521 ms breaches the 500 ms SLA.',
-            'SGLang handles the same cell at 100% goodput — TTFT p50 = 462 ms.',
-            'Both engines maintain 100% goodput at ctx ≤ 4096 with c ≤ 8.',
-            'TPOT p99 is the binding constraint at c=32+ — plan capacity for c ≤ 16 to stay within SLO.',
+            '100% goodput at all tested cells — every request meets TTFT, TPOT, and E2E SLA thresholds simultaneously.',
+            'The closest E2E breach is SGLang ctx=8192 c=32 random: E2E p99 = <strong>9,057 ms</strong> (SLA limit = 10,000 ms).',
+            'shared_prefix workload improves both TTFT and E2E significantly at the same ctx/concurrency.',
+            'Both engines show 100% success rate — no connection errors or timeouts in the final runs.',
           ]} />
 
           {/* ── UC5 ────────────────────────────────────────────────────── */}
@@ -527,7 +618,12 @@ SGLANG_ALLOW_OVERWRITE_LONGER_CONTEXT_LEN=1 \\
 CUDA_VISIBLE_DEVICES=0 python -m sglang.launch_server \\
     --model-path Qwen/Qwen3-8B \\
     --context-length 131072 \\
-    --kv-cache-dtype fp8_e5m2 --port 30000`}</Code>
+    --kv-cache-dtype fp8_e5m2 --port 30000
+
+python -m inference_optimizer sweep \\
+    --long-context --engine sglang --model Qwen/Qwen3-8B \\
+    --sglang-url http://localhost:30000 \\
+    --output-dir ./results/sglang_longctx`}</Code>
 
           <Callout variant="success">
             <strong>RadixAttention delivers a 1,443× TTFT reduction at 131K tokens</strong> — 39 ms cached vs 55,565 ms cold.
@@ -571,11 +667,17 @@ CUDA_VISIBLE_DEVICES=0 python -m sglang.launch_server \\
             <ChartImg src="/benchmarks/longctx_throughput_shared.png"
               alt="Long-ctx throughput shared" caption="Figure 5.2: Long-ctx throughput — shared_prefix (cached)" />
           </TwoUp>
+          <TwoUp>
+            <ChartImg src="/benchmarks/longctx_latency_shared.png"
+              alt="Long-ctx latency shared" caption="Figure 5.3: Long-ctx latency — shared_prefix" />
+            <ChartImg src="/benchmarks/throughput_curve_sglang_shared_prefix.png"
+              alt="SGLang shared_prefix throughput" caption="Figure 5.4: SGLang throughput — shared_prefix (all ctx)" />
+          </TwoUp>
 
           <KeyTakeaways items={[
             '<strong>1,443× TTFT reduction</strong> at 131K tokens on shared-prefix vs random workloads.',
             'FP8 KV is essential — BF16 KV at 128K tokens would require 57 GB+, exceeding single-GPU capacity.',
-            'Shared-prefix throughput at 64K (1,007 tok/s) matches short-context performance — cache pays prefill once.',
+            'Shared-prefix TPS at 64K (1,007 tok/s) matches short-context performance — cache pays prefill cost once.',
             'For RAG: use SGLang with RadixAttention; even partial prefix sharing yields large TTFT reductions.',
           ]} />
 
@@ -623,10 +725,10 @@ CUDA_VISIBLE_DEVICES=0,1 vllm serve Qwen/Qwen3-8B \\
           </Table>
 
           <TwoUp>
-            <ChartImg src="/benchmarks/tp2_sglang_throughput.png"
-              alt="SGLang TP=2 throughput" caption="Figure 6.1: SGLang TP=2 throughput — random" />
-            <ChartImg src="/benchmarks/tp2_vllm_throughput.png"
-              alt="vLLM TP=2 throughput" caption="Figure 6.2: vLLM TP=2 throughput — random" />
+            <ChartImg src="/benchmarks/throughput_curve_sglang_random.png"
+              alt="SGLang TP=1 throughput" caption="Figure 6.1: SGLang TP=1 throughput — random" />
+            <ChartImg src="/benchmarks/throughput_curve_vllm_random.png"
+              alt="vLLM TP=1 throughput" caption="Figure 6.2: vLLM TP=1 throughput — random" />
           </TwoUp>
 
           <KeyTakeaways items={[
@@ -639,12 +741,14 @@ CUDA_VISIBLE_DEVICES=0,1 vllm serve Qwen/Qwen3-8B \\
           {/* ── UC7 ────────────────────────────────────────────────────── */}
           <SectionAnchor id="uc7"
             title="Use Case 7: Time-Sliced Saturation Analysis"
-            sub="Tracing the performance trajectory from c=1 to c=64 — SGLang, ctx=1024, random" />
+            sub="SGLang · ctx=1024, random · Full latency profile across concurrencies" />
 
-          <Table>
+          <Table wide>
             <thead><tr>
-              <Th>Slice</Th><Th>Concurrency</Th><Th>TPS</Th>
-              <Th>TTFT p50</Th><Th>TPOT p50</Th><Th>TPOT p99</Th><Th>SLA</Th>
+              <Th>#</Th><Th>C</Th><Th>TPS</Th>
+              <Th>TTFT p50</Th><Th>TTFT p99</Th>
+              <Th>TPOT p50</Th><Th>TPOT p99</Th>
+              <Th>E2E p99</Th><Th>Queue p50</Th><Th>SLA</Th>
             </tr></thead>
             <tbody>
               {UC7_SLICES.map(r => (
@@ -653,25 +757,26 @@ CUDA_VISIBLE_DEVICES=0,1 vllm serve Qwen/Qwen3-8B \\
                   <Td mono right><span className="font-bold">{r.c}</span></Td>
                   <Td mono right>{r.tps.toLocaleString()}</Td>
                   <Td mono right>{r.ttft_p50} ms</Td>
+                  <Td mono right>{r.ttft_p99} ms</Td>
                   <Td mono right>{r.tpot_p50} ms</Td>
-                  <Td mono right>
-                    <MetricBadge val={r.tpot_p99} pass={r.sla} />
+                  <Td mono right><MetricBadge val={r.tpot_p99} pass={r.tpot_p99 <= SLA.tpot_ms} /></Td>
+                  <Td mono right>{r.e2e_p99.toLocaleString()} ms</Td>
+                  <Td mono right muted={r.q_p50 === 0}>
+                    {r.q_p50 > 0 ? r.q_p50.toLocaleString() : '—'} {r.q_p50 > 0 ? 'ms' : ''}
                   </Td>
-                  <Td>
-                    {r.sla
-                      ? <span className="flex items-center gap-1 text-xs text-emerald-600"><CheckCircle2 className="w-3 h-3" />Pass</span>
-                      : <span className="flex items-center gap-1 text-xs text-red-600 font-semibold"><AlertTriangle className="w-3 h-3" />Breach</span>}
-                  </Td>
+                  <Td><SlaTag pass={r.sla} /></Td>
                 </tr>
               ))}
             </tbody>
           </Table>
+          <p className="text-[11px] text-gray-400 -mt-4 mb-6">All latencies in ms. Queue p50 reflects serial queuing at low concurrency; drops to ~0 when the engine batches requests.</p>
 
           <KeyTakeaways items={[
-            'TPS scales near-linearly from c=1 to c=16, then plateaus — the knee of the concurrency curve.',
-            'Saturation cliff at <strong>c=32</strong>: TPOT p99 crosses 50 ms for both engines at all context lengths.',
-            'Scale horizontally (more replicas) rather than vertically (higher c) beyond c=16.',
-            'Monitor TPOT p99 in production — set alerts at 45 ms (90% of SLA) to catch saturation before users notice.',
+            'All eight concurrency slices (c=1 to c=128) pass every SLA threshold at ctx=1024 — no breaches.',
+            'TPOT p99 peaks at <strong>14.62 ms</strong> (c=64), well under the 50 ms SLA limit.',
+            'E2E p99 peaks at <strong>4,618 ms</strong> (c=64), well under the 10,000 ms SLA limit.',
+            'TPS decreases after c=1 — the benchmark measures effective batch throughput; at c=1 requests serialise so per-unit tput dominates.',
+            'Queue wait time at c=1 (~31 s) reflects serial execution: each request waits for all previous to complete.',
           ]} />
 
           {/* ── Bottleneck ─────────────────────────────────────────────── */}
@@ -691,7 +796,7 @@ CUDA_VISIBLE_DEVICES=0,1 vllm serve Qwen/Qwen3-8B \\
               ].map(([cls, meaning, trigger]) => (
                 <tr key={cls} className="even:bg-gray-50">
                   <Td><code className="bg-slate-100 px-1.5 py-0.5 rounded text-[11px] font-mono text-slate-700">{cls}</code></Td>
-                  <Td muted={false}>{meaning}</Td>
+                  <Td>{meaning}</Td>
                   <Td muted>{trigger}</Td>
                 </tr>
               ))}
@@ -710,9 +815,9 @@ CUDA_VISIBLE_DEVICES=0,1 vllm serve Qwen/Qwen3-8B \\
               <ul className="space-y-2 text-sm text-blue-900">
                 {[
                   'Repeated long system prompts (RAG, agents) — RadixAttention gives >1,000× TTFT reduction',
-                  'Predictable tail latency required — SGLang p99 TTFT is consistently lower under load',
+                  'Predictable tail latency required — SGLang TTFT p99 is consistently lower under load',
                   'Long-context inference (>32K) — FP8 KV + RadixAttention maximise effective throughput',
-                  'Strict TTFT SLA at ctx=8K — vLLM breaches 500 ms; SGLang stays within SLO',
+                  'Lower TTFT across all contexts — SGLang prefill is faster at ctx=512 to 8K',
                 ].map((item, i) => (
                   <li key={i} className="flex gap-2">
                     <CheckCircle2 className="w-4 h-4 text-blue-500 mt-0.5 shrink-0" />
@@ -725,10 +830,10 @@ CUDA_VISIBLE_DEVICES=0,1 vllm serve Qwen/Qwen3-8B \\
               <p className="text-xs font-bold text-orange-600 uppercase tracking-wider mb-3">Choose vLLM when…</p>
               <ul className="space-y-2 text-sm text-orange-900">
                 {[
-                  'Minimum TTFT at ctx ≤ 2048 c=1 — vLLM is 7% faster (43 ms vs 46 ms)',
-                  'Ecosystem integration: OpenAI-compatible API, structured-output, LoRA',
+                  'Ecosystem integration: OpenAI-compatible API, structured-output, LoRA adapters',
                   'NVLink TP=2 available — vLLM achieves higher scaling factor (2.90× vs 2.63×)',
                   'Batch pipelines where TTFT SLA is not the primary constraint',
+                  'Teams already invested in vLLM tooling — near-equivalent SLA compliance across all tested cells',
                 ].map((item, i) => (
                   <li key={i} className="flex gap-2">
                     <CheckCircle2 className="w-4 h-4 text-orange-500 mt-0.5 shrink-0" />
@@ -744,10 +849,11 @@ CUDA_VISIBLE_DEVICES=0,1 vllm serve Qwen/Qwen3-8B \\
             <div className="space-y-3">
               {[
                 ['Use TP=2 on every 2×H100 NVL node', '2.63–2.90× throughput at zero added GPU-hour cost per request.'],
-                ['Cap concurrency at c=32 per instance', 'Beyond c=32 TPOT p99 crosses 50 ms. Scale horizontally instead.'],
+                ['Cap concurrency at c=32 per instance', 'Beyond c=32 throughput plateaus and E2E p99 approaches 50% of the SLA limit.'],
                 ['Enable FP8 KV for ctx ≥ 32K', 'Halves KV memory — enables 128K context on a single 94 GB H100.'],
                 ['Route long-context to SGLang', 'RadixAttention eliminates repeat prefill for RAG / agent patterns.'],
                 ['Alert on TPOT p99 > 45 ms', '90% of the SLA limit — time to react before users notice degradation.'],
+                ['Monitor E2E p99 at ctx=8K c=32', 'SGLang E2E p99 = 9,057 ms — closest measured cell to the 10,000 ms SLA boundary.'],
               ].map(([title, body]) => (
                 <div key={title} className="flex gap-3">
                   <TrendingUp className="w-4 h-4 text-teal-400 mt-0.5 shrink-0" />
@@ -758,7 +864,6 @@ CUDA_VISIBLE_DEVICES=0,1 vllm serve Qwen/Qwen3-8B \\
             </div>
           </div>
 
-          {/* Footer links */}
           <div className="border-t border-gray-200 pt-6 flex flex-wrap gap-4 text-sm">
             <a href={META.source} target="_blank" rel="noopener noreferrer"
               className="inline-flex items-center gap-1.5 text-teal-600 hover:text-teal-700 font-medium">
