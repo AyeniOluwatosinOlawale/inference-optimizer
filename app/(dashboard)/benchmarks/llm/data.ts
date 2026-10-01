@@ -15,10 +15,10 @@ export const HEADLINE = [
   { label: 'SGLang TP=2',         value: '5,646',   unit: 'tok/s',  detail: '2.63× NVLink speedup'    },
   { label: 'vLLM TP=2',           value: '5,965',   unit: 'tok/s',  detail: '2.90× NVLink speedup'    },
   { label: 'RadixAttn TTFT↓',     value: '1,443×',  unit: 'speedup',detail: '39 ms vs 55,565 ms @ 131K' },
-  { label: 'E2E SLA compliance',   value: '100%',    unit: 'goodput',detail: 'ctx≤8K c≤16 all workloads' },
+  { label: 'E2E SLO compliance',   value: '100%',    unit: 'goodput',detail: 'ctx≤8K c≤16 all workloads' },
 ];
 
-export const SLA = { ttft_ms: 500, e2e_ms: 10_000, tpot_ms: 50 };
+export const SLO = { ttft_ms: 500, e2e_ms: 10_000, tpot_ms: 50 };
 
 // ── UC1: SGLang Pareto — ctx=1024, random workload ───────────────────────────
 // Fields: TPS, TTFT (p50/p90/p99), TPOT (p50/p90/p99), E2E (p50/p99), Queue p50
@@ -83,8 +83,8 @@ export const UC3_HH = [
   { engine: 'vLLM',   ctx: 2048, c: 32, tps: 1276, ttft_p50: 221.7, ttft_p99: 235.7, tpot_p50: 15.05, tpot_p99: 18.32, e2e_p50: 5204, e2e_p99: 5215 },
 ];
 
-// ── UC4: Goodput / SLA — key cells ───────────────────────────────────────────
-// Fields: success%, goodput%, TTFT (p50/p99), TPOT p99, E2E p99, SLA status
+// ── UC4: Goodput / SLO — key cells ───────────────────────────────────────────
+// Fields: success%, goodput%, TTFT (p50/p99), TPOT p99, E2E p99, SLO status
 export const UC4_GOODPUT = [
   { engine: 'SGLang', ctx: 512,  c: 1,  wl: 'random',        ok: 100, goodput: 100, ttft_p50: 45.9,  ttft_p99: 64.5,  tpot_p99: 10.0, e2e_p99: 3136  },
   { engine: 'vLLM',   ctx: 512,  c: 1,  wl: 'random',        ok: 100, goodput: 100, ttft_p50: 58.3,  ttft_p99: 67.4,  tpot_p99: 10.5, e2e_p99: 3345  },
@@ -115,10 +115,10 @@ export const UC6_TP2 = [
 ];
 
 // ── UC7: Saturation slices — SGLang, ctx=1024, random ────────────────────────
-// Fields: TTFT (p50/p99), TPOT (p50/p99), E2E p99, Queue p50, SLA pass/fail
+// Fields: TTFT (p50/p99), TPOT (p50/p99), E2E p99, Queue p50, SLO pass/fail
 export const UC7_SLICES = [
-  { slice: 1, c: 1,   tps: 2175, ttft_p50: 34.1,  ttft_p99: 37.0,  tpot_p50: 9.07,  tpot_p99: 9.8,   e2e_p99: 3104, q_p50: 31033, sla: true  },
-  { slice: 2, c: 2,   tps: 2067, ttft_p50: 56.6,  ttft_p99: 59.8,  tpot_p50: 9.55,  tpot_p99: 10.66, e2e_p99: 3289, q_p50: 16429, sla: true  },
+  { slice: 1, c: 1,   tps: 2175, ttft_p50: 34.1,  ttft_p99: 37.0,  tpot_p50: 9.07,  tpot_p99: 9.8,   e2e_p99: 3104, q_p50: 31033, slo: true  },
+  { slice: 2, c: 2,   tps: 2067, ttft_p50: 56.6,  ttft_p99: 59.8,  tpot_p50: 9.55,  tpot_p99: 10.66, e2e_p99: 3289, q_p50: 16429, slo: true  },
   { slice: 3, c: 4,   tps: 1974, ttft_p50: 69.4,  ttft_p99: 102.2, tpot_p50: 9.9,   tpot_p99: 10.88, e2e_p99: 3423, q_p50: 6777,  sla: true  },
   { slice: 4, c: 8,   tps: 1933, ttft_p50: 72.7,  ttft_p99: 102.4, tpot_p50: 10.16, tpot_p99: 10.95, e2e_p99: 3541, q_p50: 3523,  sla: true  },
   { slice: 5, c: 16,  tps: 1735, ttft_p50: 108.6, ttft_p99: 138.7, tpot_p50: 11.22, tpot_p99: 12.43, e2e_p99: 3935, q_p50: 0,     sla: true  },

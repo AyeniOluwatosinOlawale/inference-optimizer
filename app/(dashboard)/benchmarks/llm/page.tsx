@@ -2,7 +2,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { ExternalLink, Github, Cpu, Zap, Clock, TrendingUp, AlertTriangle, CheckCircle2, XCircle } from 'lucide-react';
 import {
-  META, HEADLINE, SLA,
+  META, HEADLINE, SLO,
   UC1_PARETO, UC1_VLLM_PARETO, UC1_PREFIX_SPEEDUP,
   UC2_PERCENTILES, UC3_HH, UC4_GOODPUT,
   UC5_LONGCTX, UC6_TP2, UC7_SLICES,
@@ -142,7 +142,7 @@ const TOC = [
   { id: 'uc1',        label: 'UC 1: Profiling & Pareto' },
   { id: 'uc2',        label: 'UC 2: Percentile Analysis' },
   { id: 'uc3',        label: 'UC 3: Engine Comparison' },
-  { id: 'uc4',        label: 'UC 4: Goodput / SLA' },
+  { id: 'uc4',        label: 'UC 4: Goodput / SLO' },
   { id: 'uc5',        label: 'UC 5: Long-Context' },
   { id: 'uc6',        label: 'UC 6: Tensor Parallel TP=2' },
   { id: 'uc7',        label: 'UC 7: Saturation Analysis' },
@@ -200,15 +200,15 @@ export default function LLMBenchmarkPage() {
         </div>
       </div>
 
-      {/* SLA banner */}
+      {/* SLO banner */}
       <div className="bg-slate-800 text-white text-xs py-2">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-wrap gap-4 items-center">
-          <span className="text-slate-400 font-semibold">SLA thresholds:</span>
-          <span>TTFT ≤ <span className="text-teal-400 font-mono font-bold">{SLA.ttft_ms} ms</span></span>
-          <span>E2E ≤ <span className="text-teal-400 font-mono font-bold">{SLA.e2e_ms.toLocaleString()} ms</span></span>
-          <span>TPOT ≤ <span className="text-teal-400 font-mono font-bold">{SLA.tpot_ms} ms</span></span>
+          <span className="text-slate-400 font-semibold">Serving SLOs (P99):</span>
+          <span>TTFT ≤ <span className="text-teal-400 font-mono font-bold">{SLO.ttft_ms} ms</span></span>
+          <span>E2E ≤ <span className="text-teal-400 font-mono font-bold">{SLO.e2e_ms.toLocaleString()} ms</span></span>
+          <span>TPOT ≤ <span className="text-teal-400 font-mono font-bold">{SLO.tpot_ms} ms</span></span>
           <span className="text-slate-500 ml-auto hidden sm:block">
-            Goodput = % of all requests meeting every threshold simultaneously
+            Goodput = % of requests satisfying all SLOs simultaneously (TTFT p99 + TPOT p99 + E2E p99)
           </span>
         </div>
       </div>
@@ -291,11 +291,11 @@ python -m inference_optimizer sweep \\
               <Th>TTFT p50</Th><Th>TTFT p90</Th><Th>TTFT p99</Th>
               <Th>TPOT p50</Th><Th>TPOT p90</Th><Th>TPOT p99</Th>
               <Th>E2E p50</Th><Th>E2E p99</Th>
-              <Th>Queue p50</Th><Th>SLA</Th>
+              <Th>Queue p50</Th><Th>SLO</Th>
             </tr></thead>
             <tbody>
               {UC1_PARETO.map(r => {
-                const slaOk = r.tpot_p99 <= SLA.tpot_ms && r.ttft_p50 <= SLA.ttft_ms && r.e2e_p99 <= SLA.e2e_ms;
+                const slaOk = r.tpot_p99 <= SLO.tpot_ms && r.ttft_p50 <= SLO.ttft_ms && r.e2e_p99 <= SLO.e2e_ms;
                 return (
                   <tr key={r.c} className={`even:bg-gray-50 ${!slaOk ? 'bg-red-50' : ''}`}>
                     <Td mono><span className="font-bold">{r.c}</span></Td>
@@ -305,7 +305,7 @@ python -m inference_optimizer sweep \\
                     <Td mono right>{r.ttft_p99}</Td>
                     <Td mono right>{r.tpot_p50}</Td>
                     <Td mono right>{r.tpot_p90}</Td>
-                    <Td mono right><MetricBadge val={r.tpot_p99} pass={r.tpot_p99 <= SLA.tpot_ms} /></Td>
+                    <Td mono right><MetricBadge val={r.tpot_p99} pass={r.tpot_p99 <= SLO.tpot_ms} /></Td>
                     <Td mono right>{r.e2e_p50.toLocaleString()}</Td>
                     <Td mono right>{r.e2e_p99.toLocaleString()}</Td>
                     <Td mono right muted={r.q_p50 === 0}>{r.q_p50 > 0 ? r.q_p50.toLocaleString() : ''}</Td>
@@ -338,11 +338,11 @@ python -m inference_optimizer sweep \\
               <Th>TTFT p50</Th><Th>TTFT p90</Th><Th>TTFT p99</Th>
               <Th>TPOT p50</Th><Th>TPOT p90</Th><Th>TPOT p99</Th>
               <Th>E2E p50</Th><Th>E2E p99</Th>
-              <Th>Queue p50</Th><Th>SLA</Th>
+              <Th>Queue p50</Th><Th>SLO</Th>
             </tr></thead>
             <tbody>
               {UC1_VLLM_PARETO.map(r => {
-                const slaOk = r.tpot_p99 <= SLA.tpot_ms && r.ttft_p50 <= SLA.ttft_ms && r.e2e_p99 <= SLA.e2e_ms;
+                const slaOk = r.tpot_p99 <= SLO.tpot_ms && r.ttft_p50 <= SLO.ttft_ms && r.e2e_p99 <= SLO.e2e_ms;
                 return (
                   <tr key={r.c} className={`even:bg-gray-50 ${!slaOk ? 'bg-red-50' : ''}`}>
                     <Td mono><span className="font-bold">{r.c}</span></Td>
@@ -352,7 +352,7 @@ python -m inference_optimizer sweep \\
                     <Td mono right>{r.ttft_p99}</Td>
                     <Td mono right>{r.tpot_p50}</Td>
                     <Td mono right>{r.tpot_p90}</Td>
-                    <Td mono right><MetricBadge val={r.tpot_p99} pass={r.tpot_p99 <= SLA.tpot_ms} /></Td>
+                    <Td mono right><MetricBadge val={r.tpot_p99} pass={r.tpot_p99 <= SLO.tpot_ms} /></Td>
                     <Td mono right>{r.e2e_p50.toLocaleString()}</Td>
                     <Td mono right>{r.e2e_p99.toLocaleString()}</Td>
                     <Td mono right muted={r.q_p50 === 0}>{r.q_p50 > 0 ? r.q_p50.toLocaleString() : ''}</Td>
@@ -414,8 +414,8 @@ python -m inference_optimizer sweep \\
 
           <KeyTakeaways items={[
             'SGLang peaks at <strong>2,175 tok/s</strong>; vLLM at <strong>2,053 tok/s</strong> - both at ctx=1024 c=1.',
-            'All concurrencies tested (c=1 to c=128) pass every SLA threshold at ctx=1024 - no breaches on either engine.',
-            'TPOT p99 stays below <strong>15 ms</strong> even at c=128, far under the 50 ms SLA limit.',
+            'All concurrencies tested (c=1 to c=128) pass every SLO threshold at ctx=1024 - no breaches on either engine.',
+            'TPOT p99 stays below <strong>15 ms</strong> even at c=128, far under the 50 ms SLO limit.',
             'Shared-prefix TTFT speedup grows with context: 1.3× at 4K → <strong>2.3×</strong> at 32K tokens.',
             'Queue wait time collapses from ~31 s at c=1 to ~0 at c=16 as the engine batches concurrent requests.',
           ]} />
@@ -465,7 +465,7 @@ python3 scripts/generate_report_metrics.py \\
           <KeyTakeaways items={[
             'SGLang TTFT p99 is <strong>~17% lower</strong> than vLLM at ctx=2048 c=8 (111 ms vs 134 ms) - better tail behaviour.',
             'TPOT distribution is nearly identical between engines - both are HBM-bandwidth limited at this context.',
-            'E2E p99 stays under <strong>3,760 ms</strong> for both engines - well within the 10,000 ms SLA.',
+            'E2E p99 stays under <strong>3,760 ms</strong> for both engines - well within the 10,000 ms SLO.',
             'ITL (inter-token latency) is also nearly equal: SGLang 14.15 ms vs vLLM 14.26 ms at p99.',
           ]} />
 
@@ -511,9 +511,9 @@ python -m inference_optimizer sweep \\
             </tr></thead>
             <tbody>
               {UC3_HH.map((r, i) => {
-                const ttftBreach = r.ttft_p50 > SLA.ttft_ms;
-                const tpotBreach = r.tpot_p99 > SLA.tpot_ms;
-                const e2eBreach  = r.e2e_p99  > SLA.e2e_ms;
+                const ttftBreach = r.ttft_p50 > SLO.ttft_ms;
+                const tpotBreach = r.tpot_p99 > SLO.tpot_ms;
+                const e2eBreach  = r.e2e_p99  > SLO.e2e_ms;
                 return (
                   <tr key={i} className="even:bg-gray-50">
                     <Td><EngineTag engine={r.engine} /></Td>
@@ -537,16 +537,16 @@ python -m inference_optimizer sweep \\
             'vLLM TTFT p50 is higher than SGLang at all tested cells - SGLang\'s prefill is more efficient at these context lengths.',
             'E2E p99 stays under <strong>5,250 ms</strong> at all cells including c=32 - well within the 10,000 ms threshold.',
             'TPOT p99 differences are small (≤2 ms) - both engines are decode-bandwidth limited.',
-            'At ctx=8192 c=1, both engines produce TTFT under 400 ms, comfortably within the 500 ms SLA.',
+            'At ctx=8192 c=1, both engines produce TTFT under 400 ms, comfortably within the 500 ms SLO.',
           ]} />
 
           {/* ── UC4 ────────────────────────────────────────────────────── */}
           <SectionAnchor id="uc4"
-            title="Use Case 4: Goodput Analysis - SLA Compliance"
+            title="Use Case 4: Goodput Analysis - SLO Compliance"
             sub="% of all requests meeting TTFT + TPOT + E2E simultaneously" />
 
           <Callout variant="info">
-            <strong>Goodput</strong> = requests meeting TTFT ≤ {SLA.ttft_ms} ms <em>AND</em> E2E ≤ {SLA.e2e_ms.toLocaleString()} ms <em>AND</em> TPOT ≤ {SLA.tpot_ms} ms,
+            <strong>Goodput</strong> = requests meeting TTFT ≤ {SLO.ttft_ms} ms <em>AND</em> E2E ≤ {SLO.e2e_ms.toLocaleString()} ms <em>AND</em> TPOT ≤ {SLO.tpot_ms} ms,
             as a fraction of <em>all submitted</em> requests (including errors and timeouts).
           </Callout>
 
@@ -577,9 +577,9 @@ python -m inference_optimizer sweep \\
             </tr></thead>
             <tbody>
               {UC4_GOODPUT.map((r, i) => {
-                const ttftFail = r.ttft_p50 > SLA.ttft_ms;
-                const tpotFail = r.tpot_p99 > SLA.tpot_ms;
-                const e2eFail  = r.e2e_p99  > SLA.e2e_ms;
+                const ttftFail = r.ttft_p50 > SLO.ttft_ms;
+                const tpotFail = r.tpot_p99 > SLO.tpot_ms;
+                const e2eFail  = r.e2e_p99  > SLO.e2e_ms;
                 const gputLow  = r.goodput < 90;
                 return (
                   <tr key={i} className="even:bg-gray-50">
@@ -602,8 +602,8 @@ python -m inference_optimizer sweep \\
           </Table>
 
           <KeyTakeaways items={[
-            '100% goodput at all tested cells - every request meets TTFT, TPOT, and E2E SLA thresholds simultaneously.',
-            'The closest E2E breach is SGLang ctx=8192 c=32 random: E2E p99 = <strong>9,057 ms</strong> (SLA limit = 10,000 ms).',
+            '100% goodput at all tested cells - every request meets TTFT, TPOT, and E2E SLO thresholds simultaneously.',
+            'The closest E2E breach is SGLang ctx=8192 c=32 random: E2E p99 = <strong>9,057 ms</strong> (SLO limit = 10,000 ms).',
             'shared_prefix workload improves both TTFT and E2E significantly at the same ctx/concurrency.',
             'Both engines show 100% success rate - no connection errors or timeouts in the final runs.',
           ]} />
@@ -748,34 +748,49 @@ CUDA_VISIBLE_DEVICES=0,1 vllm serve Qwen/Qwen3-8B \\
               <Th>#</Th><Th>C</Th><Th>TPS</Th>
               <Th>TTFT p50</Th><Th>TTFT p99</Th>
               <Th>TPOT p50</Th><Th>TPOT p99</Th>
-              <Th>E2E p99</Th><Th>Queue p50</Th><Th>SLA</Th>
+              <Th>E2E p99</Th><Th>Queue p50</Th><Th>SLO</Th>
             </tr></thead>
             <tbody>
               {UC7_SLICES.map(r => (
-                <tr key={r.slice} className={`even:bg-gray-50 ${!r.sla ? 'bg-red-50' : ''}`}>
+                <tr key={r.slice} className={`even:bg-gray-50 ${!r.slo ? 'bg-red-50' : ''}`}>
                   <Td mono muted>{r.slice}</Td>
                   <Td mono right><span className="font-bold">{r.c}</span></Td>
                   <Td mono right>{r.tps.toLocaleString()}</Td>
                   <Td mono right>{r.ttft_p50} ms</Td>
                   <Td mono right>{r.ttft_p99} ms</Td>
                   <Td mono right>{r.tpot_p50} ms</Td>
-                  <Td mono right><MetricBadge val={r.tpot_p99} pass={r.tpot_p99 <= SLA.tpot_ms} /></Td>
+                  <Td mono right><MetricBadge val={r.tpot_p99} pass={r.tpot_p99 <= SLO.tpot_ms} /></Td>
                   <Td mono right>{r.e2e_p99.toLocaleString()} ms</Td>
                   <Td mono right muted={r.q_p50 === 0}>
                     {r.q_p50 > 0 ? r.q_p50.toLocaleString() : ''} {r.q_p50 > 0 ? 'ms' : ''}
                   </Td>
-                  <Td><SlaTag pass={r.sla} /></Td>
+                  <Td><SlaTag pass={r.slo} /></Td>
                 </tr>
               ))}
             </tbody>
           </Table>
           <p className="text-[11px] text-gray-400 -mt-4 mb-6">All latencies in ms. Queue p50 reflects serial queuing at low concurrency; drops to ~0 when the engine batches requests.</p>
 
+          <div className="bg-slate-800 border border-slate-600 rounded-lg p-4 mb-6 text-sm">
+            <p className="text-teal-400 font-semibold mb-2">Two distinct saturation points</p>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <p className="text-slate-300 font-medium">Throughput saturation — c=32</p>
+                <p className="text-slate-400 text-xs mt-1">TPS plateaus from 1,487 (c=32) to 1,484 (c=128). Adding concurrency beyond c=32 produces no meaningful throughput gain.</p>
+              </div>
+              <div>
+                <p className="text-slate-300 font-medium">SLO-sustainable capacity — c=128+</p>
+                <p className="text-slate-400 text-xs mt-1">All three SLOs (TTFT p99, TPOT p99, E2E p99) remain met at every tested concurrency including c=128. The SLO ceiling has not been reached.</p>
+              </div>
+            </div>
+            <p className="text-slate-500 text-xs mt-3">Production implication: cap concurrency at c=32 for maximum throughput efficiency. You have headroom to c=128 before any SLO breach — use it for burst absorption, not steady-state.</p>
+          </div>
+
           <KeyTakeaways items={[
-            'All eight concurrency slices (c=1 to c=128) pass every SLA threshold at ctx=1024 - no breaches.',
-            'TPOT p99 peaks at <strong>14.62 ms</strong> (c=64), well under the 50 ms SLA limit.',
-            'E2E p99 peaks at <strong>4,618 ms</strong> (c=64), well under the 10,000 ms SLA limit.',
-            'TPS decreases after c=1 - the benchmark measures effective batch throughput; at c=1 requests serialise so per-unit tput dominates.',
+            '<strong>Throughput saturates at c=32</strong> (1,487 tok/s); SLO saturation not reached within tested range (c=128). These are two different limits.',
+            'All eight concurrency slices (c=1 to c=128) pass every SLO threshold at ctx=1024 - no breaches.',
+            'TPOT p99 peaks at <strong>14.62 ms</strong> (c=64), well under the 50 ms SLO limit.',
+            'E2E p99 peaks at <strong>4,618 ms</strong> (c=64), well under the 10,000 ms SLO limit.',
             'Queue wait time at c=1 (~31 s) reflects serial execution: each request waits for all previous to complete.',
           ]} />
 
@@ -832,8 +847,8 @@ CUDA_VISIBLE_DEVICES=0,1 vllm serve Qwen/Qwen3-8B \\
                 {[
                   'Ecosystem integration: OpenAI-compatible API, structured-output, LoRA adapters',
                   'NVLink TP=2 available - vLLM achieves higher scaling factor (2.90× vs 2.63×)',
-                  'Batch pipelines where TTFT SLA is not the primary constraint',
-                  'Teams already invested in vLLM tooling - near-equivalent SLA compliance across all tested cells',
+                  'Batch pipelines where TTFT SLO is not the primary constraint',
+                  'Teams already invested in vLLM tooling - near-equivalent SLO compliance across all tested cells',
                 ].map((item, i) => (
                   <li key={i} className="flex gap-2">
                     <CheckCircle2 className="w-4 h-4 text-orange-500 mt-0.5 shrink-0" />
@@ -849,11 +864,11 @@ CUDA_VISIBLE_DEVICES=0,1 vllm serve Qwen/Qwen3-8B \\
             <div className="space-y-3">
               {[
                 ['Use TP=2 on every 2×H100 NVL node', '2.63-2.90× throughput at zero added GPU-hour cost per request.'],
-                ['Cap concurrency at c=32 per instance', 'Beyond c=32 throughput plateaus and E2E p99 approaches 50% of the SLA limit.'],
+                ['Cap concurrency at c=32 per instance', 'Beyond c=32 throughput plateaus and E2E p99 approaches 50% of the SLO limit.'],
                 ['Enable FP8 KV for ctx ≥ 32K', 'Halves KV memory - enables 128K context on a single 94 GB H100.'],
                 ['Route long-context to SGLang', 'RadixAttention eliminates repeat prefill for RAG / agent patterns.'],
-                ['Alert on TPOT p99 > 45 ms', '90% of the SLA limit - time to react before users notice degradation.'],
-                ['Monitor E2E p99 at ctx=8K c=32', 'SGLang E2E p99 = 9,057 ms - closest measured cell to the 10,000 ms SLA boundary.'],
+                ['Alert on TPOT p99 > 45 ms', '90% of the SLO limit - time to react before users notice degradation.'],
+                ['Monitor E2E p99 at ctx=8K c=32', 'SGLang E2E p99 = 9,057 ms - closest measured cell to the 10,000 ms SLO boundary.'],
               ].map(([title, body]) => (
                 <div key={title} className="flex gap-3">
                   <TrendingUp className="w-4 h-4 text-teal-400 mt-0.5 shrink-0" />
