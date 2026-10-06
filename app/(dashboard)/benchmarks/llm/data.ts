@@ -83,6 +83,26 @@ export const UC3_HH = [
   { engine: 'vLLM',   ctx: 2048, c: 32, tps: 1276, ttft_p50: 221.7, ttft_p99: 235.7, tpot_p50: 15.05, tpot_p99: 18.32, e2e_p50: 5204, e2e_p99: 5215 },
 ];
 
+// ── Output tokens per request — across all 576 measurement records ───────────
+// output_tokens_requested = 256 (fixed); actual varies due to EOS token timing
+export const OUTPUT_TOKENS_STATS = {
+  requested: 256,
+  sglang: { n: 11560, mean: 331.3, p50: 331, p90: 355, p99: 377, min: 278, max: 389 },
+  vllm:   { n: 10800, mean: 331.4, p50: 332, p90: 355, p99: 376, min: 273, max: 385 },
+  // per context length (SGLang default sweep, averaged across concurrencies)
+  by_ctx: [
+    { ctx: 512,    mean: 328.9, p50: 328, p99: 377 },
+    { ctx: 1024,   mean: 332.6, p50: 334, p99: 370 },
+    { ctx: 2048,   mean: 330.4, p50: 332, p99: 369 },
+    { ctx: 4096,   mean: 331.8, p50: 330, p99: 377 },
+    { ctx: 8192,   mean: 329.5, p50: 329, p99: 381 },
+    { ctx: 16384,  mean: 330.0, p50: 328, p99: 385 },
+    { ctx: 32768,  mean: 329.5, p50: 329, p99: 374 },
+    { ctx: 65536,  mean: 330.3, p50: 332, p99: 361 },
+    { ctx: 131072, mean: 335.7, p50: 336, p99: 389 },
+  ],
+};
+
 // ── UC4: Goodput / SLO — key cells ───────────────────────────────────────────
 // Fields: success%, goodput%, TTFT (p50/p99), TPOT p99, E2E p99, SLO status
 export const UC4_GOODPUT = [

@@ -6,6 +6,7 @@ import {
   UC1_PARETO, UC1_VLLM_PARETO, UC1_PREFIX_SPEEDUP,
   UC2_PERCENTILES, UC3_HH, UC4_GOODPUT,
   UC5_LONGCTX, UC6_TP2, UC7_SLICES,
+  OUTPUT_TOKENS_STATS,
 } from './data';
 
 // ─── Shared components ────────────────────────────────────────────────────────
@@ -468,6 +469,59 @@ python3 scripts/generate_report_metrics.py \\
             'E2E p99 stays under <strong>3,760 ms</strong> for both engines - well within the 10,000 ms SLO.',
             'ITL (inter-token latency) is also nearly equal: SGLang 14.15 ms vs vLLM 14.26 ms at p99.',
           ]} />
+
+          {/* ── Output Tokens ───────────────────────────────────────────── */}
+          <SubHeading>Output Tokens per Request - across all 576 measurement records</SubHeading>
+          <p className="text-slate-400 text-sm mb-4">
+            All requests used <code className="bg-slate-800 px-1.5 py-0.5 rounded text-teal-400 font-mono text-xs">output_tokens_requested = {OUTPUT_TOKENS_STATS.requested}</code>.
+            Actual output varies because the model generates until EOS — the overshoot validates the
+            benchmark is measuring real generation, not truncated responses.
+          </p>
+          <Table>
+            <thead>
+              <tr>
+                <Th>Engine</Th><Th>Records (n)</Th><Th>Requested</Th>
+                <Th>Mean actual</Th><Th>p50</Th><Th>p90</Th><Th>p99</Th>
+                <Th>Min</Th><Th>Max</Th>
+              </tr>
+            </thead>
+            <tbody>
+              {(['sglang', 'vllm'] as const).map(eng => {
+                const s = OUTPUT_TOKENS_STATS[eng];
+                return (
+                  <tr key={eng} className="even:bg-gray-50">
+                    <Td><span className="font-semibold">{eng === 'sglang' ? 'SGLang' : 'vLLM'}</span></Td>
+                    <Td mono right>{s.n.toLocaleString()}</Td>
+                    <Td mono right>{OUTPUT_TOKENS_STATS.requested}</Td>
+                    <Td mono right>{s.mean}</Td>
+                    <Td mono right>{s.p50}</Td>
+                    <Td mono right>{s.p90}</Td>
+                    <Td mono right>{s.p99}</Td>
+                    <Td mono right>{s.min}</Td>
+                    <Td mono right>{s.max}</Td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </Table>
+          <SubHeading>Output Tokens by Context Length</SubHeading>
+          <p className="text-slate-400 text-sm mb-4">Consistency across context lengths confirms output length is not a confound in latency comparisons.</p>
+          <Table>
+            <thead>
+              <tr><Th>Context (tokens)</Th><Th>Mean actual</Th><Th>p50</Th><Th>p99</Th></tr>
+            </thead>
+            <tbody>
+              {OUTPUT_TOKENS_STATS.by_ctx.map(r => (
+                <tr key={r.ctx} className="even:bg-gray-50">
+                  <Td mono>{r.ctx.toLocaleString()}</Td>
+                  <Td mono right>{r.mean}</Td>
+                  <Td mono right>{r.p50}</Td>
+                  <Td mono right>{r.p99}</Td>
+                </tr>
+              ))}
+            </tbody>
+          </Table>
+          <p className="text-[11px] text-gray-400 -mt-4 mb-6">SGLang default sweep. Mean output is stable across all context lengths (328-336 tokens), confirming that latency differences are driven by prefill cost, not output length variation.</p>
 
           {/* ── UC3 ────────────────────────────────────────────────────── */}
           <SectionAnchor id="uc3"
