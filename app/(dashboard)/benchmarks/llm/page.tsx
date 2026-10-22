@@ -1,6 +1,6 @@
 import Image from 'next/image';
 import Link from 'next/link';
-import { ExternalLink, Github, Cpu, Zap, Clock, TrendingUp, AlertTriangle, CheckCircle2, XCircle, Code2, BarChart3 } from 'lucide-react';
+import { ExternalLink, Github, Cpu, Zap, Clock, TrendingUp, AlertTriangle, CheckCircle2, XCircle, Code2, BarChart3, DollarSign } from 'lucide-react';
 import {
   META, HEADLINE, SLO,
   UC1_PARETO, UC1_VLLM_PARETO, UC1_PREFIX_SPEEDUP,
@@ -226,6 +226,16 @@ export default function LLMBenchmarkPage() {
               <p className="text-xs text-blue-600 mt-0.5">Grafana · Prometheus · KEDA</p>
             </div>
           </Link>
+          <a href="https://api.136.65.123.94.nip.io/ui" target="_blank" rel="noopener noreferrer"
+            className="flex items-center gap-3 rounded-xl border border-green-300 bg-white px-4 py-3 shadow-sm">
+            <div className="w-8 h-8 rounded bg-green-600 flex items-center justify-center shrink-0">
+              <DollarSign className="w-4 h-4 text-white" />
+            </div>
+            <div>
+              <p className="text-sm font-bold text-green-800">LiteLLM Dashboard →</p>
+              <p className="text-xs text-green-600 mt-0.5">Spend · Keys · Usage logs</p>
+            </div>
+          </a>
         </div>
         <div>
           <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Model Capabilities</p>
