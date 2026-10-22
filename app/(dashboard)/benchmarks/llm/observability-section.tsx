@@ -1,12 +1,12 @@
 import { ExternalLink, BarChart3, Bell, Gauge } from 'lucide-react';
 
-const GRAFANA_URL    = 'http://grafana.136.65.123.94.nip.io/dashboards';
-const PROMETHEUS_URL = 'http://prometheus.136.65.123.94.nip.io/alerts';
+const GRAFANA_URL    = 'https://grafana.136.65.123.94.nip.io/dashboards';
+const PROMETHEUS_URL = 'https://prometheus.136.65.123.94.nip.io/alerts';
 
 const DASHBOARDS = [
-  { name: 'vLLM Overview',     path: 'http://grafana.136.65.123.94.nip.io/d/vllm-overview',    desc: 'Queue depth, TTFT histogram, KV-cache %' },
-  { name: 'GPU Utilization',   path: 'http://grafana.136.65.123.94.nip.io/d/gpu-utilization',  desc: 'SM utilization, memory used, power draw (DCGM)' },
-  { name: 'LiteLLM Gateway',   path: 'http://grafana.136.65.123.94.nip.io/d/litellm-gateway',  desc: 'Req/s, p50/p99 latency, cache hit rate' },
+  { name: 'vLLM Overview',     path: 'https://grafana.136.65.123.94.nip.io/d/vllm-overview',    desc: 'Queue depth, TTFT histogram, KV-cache %' },
+  { name: 'GPU Utilization',   path: 'https://grafana.136.65.123.94.nip.io/d/gpu-utilization',  desc: 'SM utilization, memory used, power draw (DCGM)' },
+  { name: 'LiteLLM Gateway',   path: 'https://grafana.136.65.123.94.nip.io/d/litellm-gateway',  desc: 'Req/s, p50/p99 latency, cache hit rate' },
 ];
 
 const ALERT_RULES = [
@@ -47,15 +47,9 @@ export function ObservabilitySection() {
             → {PROMETHEUS_URL}
           </a>
         </div>
-        <div className="border-t border-white/10 pt-3 grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <div>
-            <p className="text-[10px] text-slate-400 uppercase tracking-wider mb-1">Gateway auth (both URLs)</p>
-            <code className="text-xs text-white">admin / AnaModel2026!</code>
-          </div>
-          <div>
-            <p className="text-[10px] text-slate-400 uppercase tracking-wider mb-1">Grafana login</p>
-            <code className="text-xs text-white">admin / llm-platform-admin</code>
-          </div>
+        <div className="border-t border-white/10 pt-3">
+          <p className="text-[10px] text-slate-400 uppercase tracking-wider mb-1">Grafana login</p>
+          <code className="text-xs text-white">admin / llm-platform-admin</code>
         </div>
       </div>
 
