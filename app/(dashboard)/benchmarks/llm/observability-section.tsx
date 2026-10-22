@@ -26,7 +26,7 @@ export function ObservabilitySection() {
       <div className="mb-6">
         <h2 className="text-xl font-bold text-gray-900 mb-1">Observability</h2>
         <p className="text-sm text-gray-500">
-          Live metrics, alerting rules, and autoscaling — port-forward to access locally.
+          Live metrics, alerting rules, and autoscaling — publicly accessible via Traefik ingress.
         </p>
         <div className="mt-3 h-[2px] bg-gradient-to-r from-teal-500 to-transparent" />
       </div>
@@ -35,9 +35,9 @@ export function ObservabilitySection() {
       <div className="rounded-xl bg-[#16213E] text-white p-4 mb-6">
         <div className="flex items-center gap-2 mb-3">
           <ExternalLink className="w-4 h-4 text-teal-400" />
-          <span className="text-xs font-bold text-teal-400 uppercase tracking-wider">Live Public URLs — credentials in your deployment secrets</span>
+          <span className="text-xs font-bold text-teal-400 uppercase tracking-wider">Live Public URLs</span>
         </div>
-        <div className="flex flex-col gap-2">
+        <div className="flex flex-col gap-2 mb-4">
           <a href={GRAFANA_URL} target="_blank" rel="noopener noreferrer"
             className="text-xs font-mono text-teal-300 hover:text-teal-100 transition-colors">
             → {GRAFANA_URL}
@@ -46,6 +46,16 @@ export function ObservabilitySection() {
             className="text-xs font-mono text-teal-300 hover:text-teal-100 transition-colors">
             → {PROMETHEUS_URL}
           </a>
+        </div>
+        <div className="border-t border-white/10 pt-3 grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <p className="text-[10px] text-slate-400 uppercase tracking-wider mb-1">Gateway auth (both URLs)</p>
+            <code className="text-xs text-white">admin / AnaModel2026!</code>
+          </div>
+          <div>
+            <p className="text-[10px] text-slate-400 uppercase tracking-wider mb-1">Grafana login</p>
+            <code className="text-xs text-white">admin / llm-platform-admin</code>
+          </div>
         </div>
       </div>
 
