@@ -1,17 +1,14 @@
 import { ObservabilitySection } from '../benchmarks/llm/observability-section';
 import { BarChart3, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
-import { PasswordGate } from './password-gate';
 
 export const metadata = {
   title: 'Observability — AnaModel Inference Platform',
 };
 
-const PASSWORD = process.env.OBSERVABILITY_PASSWORD ?? '';
-
 export default function ObservabilityPage() {
   return (
-    <PasswordGate password={PASSWORD}>
+    <>
       <div className="min-h-screen bg-white">
 
         {/* Hero */}
@@ -32,8 +29,8 @@ export default function ObservabilityPage() {
             {/* Live metric pills */}
             <div className="flex flex-wrap gap-3 mt-6">
               {[
-                { label: 'Grafana',    status: 'Port-forward :3000', color: 'bg-orange-500' },
-                { label: 'Prometheus', status: 'Port-forward :9090', color: 'bg-red-500'    },
+                { label: 'Grafana',    status: 'Live',   color: 'bg-orange-500' },
+                { label: 'Prometheus', status: 'Live',   color: 'bg-red-500'    },
                 { label: 'KEDA',       status: 'Active',             color: 'bg-teal-500'   },
                 { label: 'HPA',        status: 'Active',             color: 'bg-teal-500'   },
               ].map(m => (
@@ -78,6 +75,6 @@ export default function ObservabilityPage() {
           </div>
         </div>
       </div>
-    </PasswordGate>
+    </>
   );
 }

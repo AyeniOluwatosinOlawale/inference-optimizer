@@ -9,6 +9,16 @@ export async function middleware(request: NextRequest) {
   const sessionCookie = request.cookies.get('session');
   const isProtectedRoute = pathname.startsWith(protectedRoutes);
 
+  // Observability page: require HTTP-only cookie set by /api/observability/verify
+  if (pathname.startsWith('/observability') && !pathname.startsWith('/api/')) {
+    const obsAccess = request.cookies.get('obs_access');
+    if (!obsAccess) {
+      const url = request.nextUrl.clone();
+      url.pathname = '/observability/locked';
+      return NextResponse.rewrite(url);
+    }
+  }
+
   if (isProtectedRoute && !sessionCookie) {
     return NextResponse.redirect(new URL('/sign-in', request.url));
   }
