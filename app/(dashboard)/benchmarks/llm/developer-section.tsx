@@ -328,7 +328,7 @@ export function DeveloperSection() {
         <span className="text-[11px] font-bold text-teal-400 uppercase tracking-wider shrink-0">Endpoint</span>
         <code className="text-sm font-mono text-white flex-1 truncate">{ENDPOINT}</code>
         <CopyButton text={ENDPOINT} />
-        <a href={`${BASE}/chat`} target="_blank" rel="noopener noreferrer"
+        <a href={`${BASE}/agent/chat`} target="_blank" rel="noopener noreferrer"
           className="flex items-center gap-1 text-xs text-teal-400 hover:text-teal-300 shrink-0">
           Chat UI <ExternalLink className="w-3 h-3" />
         </a>
