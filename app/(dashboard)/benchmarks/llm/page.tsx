@@ -214,6 +214,35 @@ export default function LLMBenchmarkPage() {
         </div>
       </div>
 
+      {/* ── Quick access banner ──────────────────────────────────────────── */}
+      <div className="bg-gray-50 border-b border-gray-200">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4">Quick Access</p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <Link href="/developer"
+              className="flex items-center gap-4 rounded-xl border-2 border-teal-500 bg-white p-5 hover:bg-teal-50 transition-colors group shadow-sm">
+              <div className="w-10 h-10 rounded-lg bg-teal-600 flex items-center justify-center shrink-0">
+                <Code2 className="w-5 h-5 text-white" />
+              </div>
+              <div className="flex-1">
+                <p className="text-sm font-bold text-gray-900 group-hover:text-teal-700">Developer Portal →</p>
+                <p className="text-xs text-gray-500 mt-0.5">Endpoint · Python / JS / cURL examples · Generate API key</p>
+              </div>
+            </Link>
+            <Link href="/observability"
+              className="flex items-center gap-4 rounded-xl border-2 border-blue-500 bg-white p-5 hover:bg-blue-50 transition-colors group shadow-sm">
+              <div className="w-10 h-10 rounded-lg bg-blue-600 flex items-center justify-center shrink-0">
+                <BarChart3 className="w-5 h-5 text-white" />
+              </div>
+              <div className="flex-1">
+                <p className="text-sm font-bold text-gray-900 group-hover:text-blue-700">Observability →</p>
+                <p className="text-xs text-gray-500 mt-0.5">Grafana dashboards · Prometheus alerts · Autoscaling</p>
+              </div>
+            </Link>
+          </div>
+        </div>
+      </div>
+
       {/* ── Body ─────────────────────────────────────────────────────────── */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 flex gap-8">
 
@@ -241,32 +270,6 @@ export default function LLMBenchmarkPage() {
 
         {/* Main content */}
         <main className="min-w-0 flex-1 max-w-4xl">
-
-          {/* ── Quick links ────────────────────────────────────────────── */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-10">
-            <Link href="/developer"
-              className="flex items-start gap-4 rounded-xl border border-teal-200 bg-teal-50/40 p-5 hover:border-teal-400 hover:bg-teal-50 transition-colors group">
-              <div className="w-10 h-10 rounded-lg bg-teal-600 flex items-center justify-center shrink-0">
-                <Code2 className="w-5 h-5 text-white" />
-              </div>
-              <div>
-                <p className="text-sm font-bold text-gray-900 group-hover:text-teal-700">Developer Portal</p>
-                <p className="text-xs text-gray-500 mt-0.5">Endpoint, code examples, generate API key</p>
-              </div>
-              <ExternalLink className="w-4 h-4 text-gray-400 ml-auto mt-0.5 shrink-0" />
-            </Link>
-            <Link href="/observability"
-              className="flex items-start gap-4 rounded-xl border border-blue-200 bg-blue-50/40 p-5 hover:border-blue-400 hover:bg-blue-50 transition-colors group">
-              <div className="w-10 h-10 rounded-lg bg-blue-600 flex items-center justify-center shrink-0">
-                <BarChart3 className="w-5 h-5 text-white" />
-              </div>
-              <div>
-                <p className="text-sm font-bold text-gray-900 group-hover:text-blue-700">Observability</p>
-                <p className="text-xs text-gray-500 mt-0.5">Grafana dashboards, Prometheus alerts, autoscaling</p>
-              </div>
-              <ExternalLink className="w-4 h-4 text-gray-400 ml-auto mt-0.5 shrink-0" />
-            </Link>
-          </div>
 
           {/* ── Setup ──────────────────────────────────────────────────── */}
           <SectionAnchor id="setup" title="Setup: Test Endpoint Details" />
