@@ -1,6 +1,8 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { ExternalLink, Github, Cpu, Zap, Clock, TrendingUp, AlertTriangle, CheckCircle2, XCircle } from 'lucide-react';
+import { DeveloperSection } from './developer-section';
+import { ObservabilitySection } from './observability-section';
 import {
   META, HEADLINE, SLO,
   UC1_PARETO, UC1_VLLM_PARETO, UC1_PREFIX_SPEEDUP,
@@ -139,16 +141,18 @@ function Code({ children }: { children: string }) {
 
 // ─── Sidebar TOC ─────────────────────────────────────────────────────────────
 const TOC = [
-  { id: 'setup',      label: 'Setup' },
-  { id: 'uc1',        label: 'UC 1: Profiling & Pareto' },
-  { id: 'uc2',        label: 'UC 2: Percentile Analysis' },
-  { id: 'uc3',        label: 'UC 3: Engine Comparison' },
-  { id: 'uc4',        label: 'UC 4: Goodput / SLO' },
-  { id: 'uc5',        label: 'UC 5: Long-Context' },
-  { id: 'uc6',        label: 'UC 6: Tensor Parallel TP=2' },
-  { id: 'uc7',        label: 'UC 7: Saturation Analysis' },
-  { id: 'bottleneck', label: 'Bottleneck Classification' },
-  { id: 'summary',    label: 'Summary' },
+  { id: 'developer',   label: '⚡ Developer Access' },
+  { id: 'observability', label: '📊 Observability' },
+  { id: 'setup',       label: 'Setup' },
+  { id: 'uc1',         label: 'UC 1: Profiling & Pareto' },
+  { id: 'uc2',         label: 'UC 2: Percentile Analysis' },
+  { id: 'uc3',         label: 'UC 3: Engine Comparison' },
+  { id: 'uc4',         label: 'UC 4: Goodput / SLO' },
+  { id: 'uc5',         label: 'UC 5: Long-Context' },
+  { id: 'uc6',         label: 'UC 6: Tensor Parallel TP=2' },
+  { id: 'uc7',         label: 'UC 7: Saturation Analysis' },
+  { id: 'bottleneck',  label: 'Bottleneck Classification' },
+  { id: 'summary',     label: 'Summary' },
 ];
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
@@ -241,6 +245,12 @@ export default function LLMBenchmarkPage() {
 
         {/* Main content */}
         <main className="min-w-0 flex-1 max-w-4xl">
+
+          {/* ── Developer Access ───────────────────────────────────────── */}
+          <DeveloperSection />
+
+          {/* ── Observability ──────────────────────────────────────────── */}
+          <ObservabilitySection />
 
           {/* ── Setup ──────────────────────────────────────────────────── */}
           <SectionAnchor id="setup" title="Setup: Test Endpoint Details" />

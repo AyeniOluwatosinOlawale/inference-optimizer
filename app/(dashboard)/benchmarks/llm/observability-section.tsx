@@ -1,0 +1,145 @@
+import { ExternalLink, BarChart3, Bell, Gauge, Terminal } from 'lucide-react';
+
+const GRAFANA_URL    = 'http://localhost:3000/dashboards';
+const PROMETHEUS_URL = 'http://localhost:9090/alerts';
+
+const DASHBOARDS = [
+  { name: 'vLLM Overview',     path: '/d/vllm-overview',    desc: 'Queue depth, TTFT histogram, KV-cache %' },
+  { name: 'GPU Utilization',   path: '/d/gpu-utilization',  desc: 'SM utilization, memory used, power draw (DCGM)' },
+  { name: 'LiteLLM Gateway',   path: '/d/litellm-gateway',  desc: 'Req/s, p50/p99 latency, cache hit rate' },
+];
+
+const ALERT_RULES = [
+  { name: 'VllmGpuCacheNearSaturation', expr: 'gpu_cache_usage_perc > 0.95', for: '2m', sev: 'critical' },
+  { name: 'VllmRequestQueueSpiking',    expr: 'num_requests_waiting > 20',   for: '5m', sev: 'warning'  },
+  { name: 'VllmPodCrashLooping',        expr: 'restarts > 3',                for: '5m', sev: 'critical' },
+  { name: 'VllmPodNotReady',            expr: 'pod_ready == 0',              for: '3m', sev: 'critical' },
+  { name: 'NodeProvisioningStalled',    expr: 'keda_active + nodes == 0',    for: '10m', sev: 'warning' },
+  { name: 'PrometheusDiskPressure',     expr: 'tsdb_bytes / 45GB > 0.90',    for: '1m', sev: 'warning'  },
+];
+
+export function ObservabilitySection() {
+  return (
+    <div id="observability" className="mb-12 scroll-mt-24">
+
+      {/* Header */}
+      <div className="mb-6">
+        <h2 className="text-xl font-bold text-gray-900 mb-1">Observability</h2>
+        <p className="text-sm text-gray-500">
+          Live metrics, alerting rules, and autoscaling — port-forward to access locally.
+        </p>
+        <div className="mt-3 h-[2px] bg-gradient-to-r from-teal-500 to-transparent" />
+      </div>
+
+      {/* Port-forward command */}
+      <div className="rounded-xl bg-[#16213E] text-white p-4 mb-6">
+        <div className="flex items-center gap-2 mb-3">
+          <Terminal className="w-4 h-4 text-teal-400" />
+          <span className="text-xs font-bold text-teal-400 uppercase tracking-wider">Access locally — run these once</span>
+        </div>
+        <pre className="text-xs font-mono text-[#D4E6FF] leading-relaxed overflow-x-auto">{
+`# Grafana dashboards
+kubectl port-forward -n monitoring svc/kube-prometheus-stack-grafana 3000:80
+
+# Prometheus alerts
+kubectl port-forward -n monitoring svc/kube-prometheus-stack-prometheus 9090:9090`
+        }</pre>
+      </div>
+
+      {/* Three metric cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+
+        {/* Grafana */}
+        <div className="rounded-xl border border-gray-200 p-4 hover:border-teal-300 transition-colors">
+          <div className="flex items-center gap-2 mb-3">
+            <div className="w-8 h-8 rounded-lg bg-orange-100 flex items-center justify-center">
+              <BarChart3 className="w-4 h-4 text-orange-600" />
+            </div>
+            <div>
+              <p className="text-sm font-bold text-gray-900">Grafana</p>
+              <p className="text-[11px] text-gray-400">Dashboards</p>
+            </div>
+            <a href={GRAFANA_URL} target="_blank" rel="noopener noreferrer"
+              className="ml-auto text-teal-600 hover:text-teal-700">
+              <ExternalLink className="w-3.5 h-3.5" />
+            </a>
+          </div>
+          <div className="space-y-2">
+            {DASHBOARDS.map(d => (
+              <a key={d.name} href={`http://localhost:3000${d.path}`} target="_blank" rel="noopener noreferrer"
+                className="block rounded-lg bg-gray-50 hover:bg-teal-50 px-3 py-2 transition-colors">
+                <p className="text-xs font-semibold text-gray-800">{d.name}</p>
+                <p className="text-[11px] text-gray-500 mt-0.5">{d.desc}</p>
+              </a>
+            ))}
+          </div>
+        </div>
+
+        {/* Prometheus */}
+        <div className="rounded-xl border border-gray-200 p-4 hover:border-teal-300 transition-colors">
+          <div className="flex items-center gap-2 mb-3">
+            <div className="w-8 h-8 rounded-lg bg-red-100 flex items-center justify-center">
+              <Bell className="w-4 h-4 text-red-600" />
+            </div>
+            <div>
+              <p className="text-sm font-bold text-gray-900">Prometheus</p>
+              <p className="text-[11px] text-gray-400">Alert Rules</p>
+            </div>
+            <a href={PROMETHEUS_URL} target="_blank" rel="noopener noreferrer"
+              className="ml-auto text-teal-600 hover:text-teal-700">
+              <ExternalLink className="w-3.5 h-3.5" />
+            </a>
+          </div>
+          <div className="space-y-1.5">
+            {ALERT_RULES.map(r => (
+              <div key={r.name} className="flex items-start gap-2 rounded-lg bg-gray-50 px-2 py-1.5">
+                <span className={`mt-0.5 w-1.5 h-1.5 rounded-full shrink-0 ${
+                  r.sev === 'critical' ? 'bg-red-500' : 'bg-amber-400'
+                }`} />
+                <div className="min-w-0">
+                  <p className="text-[11px] font-semibold text-gray-800 truncate">{r.name}</p>
+                  <p className="text-[10px] text-gray-400 font-mono truncate">{r.expr} for {r.for}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Autoscaling */}
+        <div className="rounded-xl border border-gray-200 p-4 hover:border-teal-300 transition-colors">
+          <div className="flex items-center gap-2 mb-3">
+            <div className="w-8 h-8 rounded-lg bg-teal-100 flex items-center justify-center">
+              <Gauge className="w-4 h-4 text-teal-600" />
+            </div>
+            <div>
+              <p className="text-sm font-bold text-gray-900">Autoscaling</p>
+              <p className="text-[11px] text-gray-400">KEDA + HPA</p>
+            </div>
+          </div>
+          <div className="space-y-2">
+            {[
+              { label: 'vLLM scaler',   metric: 'num_requests_waiting > 5',  action: 'scale up pods' },
+              { label: 'LiteLLM HPA',   metric: 'CPU > 70%',                 action: 'scale gateway' },
+              { label: 'Scale-to-zero', metric: 'queue idle for 10 min',     action: 'min 1 replica' },
+            ].map(item => (
+              <div key={item.label} className="rounded-lg bg-gray-50 px-3 py-2">
+                <p className="text-xs font-semibold text-gray-800">{item.label}</p>
+                <p className="text-[11px] text-gray-500 mt-0.5">
+                  <span className="font-mono">{item.metric}</span> → {item.action}
+                </p>
+              </div>
+            ))}
+            <div className="rounded-lg bg-teal-50 border border-teal-100 px-3 py-2">
+              <p className="text-[11px] text-teal-800 font-medium">
+                Check KEDA ScaledObjects:
+              </p>
+              <code className="text-[10px] font-mono text-teal-700">
+                kubectl get so -n llm-serving
+              </code>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
