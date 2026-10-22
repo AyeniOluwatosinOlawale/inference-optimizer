@@ -35,7 +35,7 @@ export function ObservabilitySection() {
       <div className="rounded-xl bg-[#16213E] text-white p-4 mb-6">
         <div className="flex items-center gap-2 mb-3">
           <ExternalLink className="w-4 h-4 text-teal-400" />
-          <span className="text-xs font-bold text-teal-400 uppercase tracking-wider">Live Public URLs — login: admin / Tolulope$12</span>
+          <span className="text-xs font-bold text-teal-400 uppercase tracking-wider">Live Public URLs — credentials in your deployment secrets</span>
         </div>
         <div className="flex flex-col gap-2">
           <a href={GRAFANA_URL} target="_blank" rel="noopener noreferrer"

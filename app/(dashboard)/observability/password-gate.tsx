@@ -26,6 +26,12 @@ export function PasswordGate({
   }, []);
 
   const submit = () => {
+    // If no password is configured server-side, block access entirely
+    if (!password) {
+      setError(true);
+      setTimeout(() => setError(false), 2000);
+      return;
+    }
     if (input === password) {
       sessionStorage.setItem(SESSION_KEY, 'true');
       setUnlocked(true);

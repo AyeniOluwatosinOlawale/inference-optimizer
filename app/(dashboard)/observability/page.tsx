@@ -7,7 +7,7 @@ export const metadata = {
   title: 'Observability — AnaModel Inference Platform',
 };
 
-const PASSWORD = process.env.OBSERVABILITY_PASSWORD ?? 'Tolulope$12';
+const PASSWORD = process.env.OBSERVABILITY_PASSWORD ?? '';
 
 export default function ObservabilityPage() {
   return (
