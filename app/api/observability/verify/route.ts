@@ -16,7 +16,7 @@ export async function POST(req: NextRequest) {
 
   const res = NextResponse.json({ ok: true });
   res.cookies.set({
-    name: 'obs_access',
+    name: 'obs_access_v2',
     value: '1',
     httpOnly: true,
     secure: true,
