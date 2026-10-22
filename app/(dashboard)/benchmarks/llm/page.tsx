@@ -224,6 +224,7 @@ export default function LLMBenchmarkPage() {
             <div>
               <p className="text-sm font-bold text-blue-800">Observability →</p>
               <p className="text-xs text-blue-600 mt-0.5">Grafana · Prometheus · KEDA</p>
+              <p className="text-[10px] text-gray-400 mt-0.5">admin / Tolulope$12</p>
             </div>
           </Link>
         </div>

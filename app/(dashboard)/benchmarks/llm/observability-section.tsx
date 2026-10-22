@@ -49,7 +49,7 @@ export function ObservabilitySection() {
         </div>
         <div className="border-t border-white/10 pt-3">
           <p className="text-[10px] text-slate-400 uppercase tracking-wider mb-1">Grafana login</p>
-          <code className="text-xs text-white">admin / llm-platform-admin</code>
+          <code className="text-xs text-white">admin / Tolulope$12</code>
         </div>
       </div>
 
