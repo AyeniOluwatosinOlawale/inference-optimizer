@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getUser } from '@/lib/db/queries';
 
 const LITELLM_URL = 'https://api.136.65.123.94.nip.io';
 const MASTER_KEY  = process.env.LITELLM_MASTER_KEY;
@@ -23,12 +22,6 @@ export async function POST(req: NextRequest) {
   if (!MASTER_KEY) {
     console.error('LITELLM_MASTER_KEY env var is not set');
     return NextResponse.json({ error: 'Service misconfigured' }, { status: 503 });
-  }
-
-  // Require a logged-in session
-  const authUser = await getUser();
-  if (!authUser) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
   const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown';
