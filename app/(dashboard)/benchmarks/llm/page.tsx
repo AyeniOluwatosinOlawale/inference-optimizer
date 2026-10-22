@@ -240,13 +240,15 @@ export default function LLMBenchmarkPage() {
             {/* ── Quick links ── */}
             <div className="mt-6 pt-4 border-t border-gray-100 flex flex-col gap-2">
               <Link href="/developer"
-                className="flex items-center gap-2 rounded-lg border border-teal-300 bg-teal-50 px-3 py-2.5 hover:bg-teal-100 transition-colors group">
-                <div className="w-6 h-6 rounded bg-teal-600 flex items-center justify-center shrink-0">
+                className="flex items-start gap-2 rounded-lg border border-teal-300 bg-teal-50 px-3 py-2.5 hover:bg-teal-100 transition-colors group">
+                <div className="w-6 h-6 rounded bg-teal-600 flex items-center justify-center shrink-0 mt-0.5">
                   <Code2 className="w-3.5 h-3.5 text-white" />
                 </div>
                 <div className="min-w-0">
                   <p className="text-xs font-bold text-teal-800 group-hover:text-teal-900">Developer Portal →</p>
-                  <p className="text-[10px] text-teal-600 leading-tight">Endpoint · API key · Examples</p>
+                  <p className="text-[10px] text-teal-600 leading-tight mt-0.5">
+                    Production-grade LLM inference API built on vLLM + LiteLLM, served on GKE with live web search, agentic integrations, and streaming — drop-in OpenAI replacement.
+                  </p>
                 </div>
               </Link>
               <Link href="/observability"
