@@ -1,12 +1,12 @@
-import { ExternalLink, BarChart3, Bell, Gauge, Terminal } from 'lucide-react';
+import { ExternalLink, BarChart3, Bell, Gauge } from 'lucide-react';
 
-const GRAFANA_URL    = 'http://localhost:3000/dashboards';
-const PROMETHEUS_URL = 'http://localhost:9090/alerts';
+const GRAFANA_URL    = 'http://grafana.136.65.123.94.nip.io/dashboards';
+const PROMETHEUS_URL = 'http://prometheus.136.65.123.94.nip.io/alerts';
 
 const DASHBOARDS = [
-  { name: 'vLLM Overview',     path: '/d/vllm-overview',    desc: 'Queue depth, TTFT histogram, KV-cache %' },
-  { name: 'GPU Utilization',   path: '/d/gpu-utilization',  desc: 'SM utilization, memory used, power draw (DCGM)' },
-  { name: 'LiteLLM Gateway',   path: '/d/litellm-gateway',  desc: 'Req/s, p50/p99 latency, cache hit rate' },
+  { name: 'vLLM Overview',     path: 'http://grafana.136.65.123.94.nip.io/d/vllm-overview',    desc: 'Queue depth, TTFT histogram, KV-cache %' },
+  { name: 'GPU Utilization',   path: 'http://grafana.136.65.123.94.nip.io/d/gpu-utilization',  desc: 'SM utilization, memory used, power draw (DCGM)' },
+  { name: 'LiteLLM Gateway',   path: 'http://grafana.136.65.123.94.nip.io/d/litellm-gateway',  desc: 'Req/s, p50/p99 latency, cache hit rate' },
 ];
 
 const ALERT_RULES = [
@@ -31,19 +31,22 @@ export function ObservabilitySection() {
         <div className="mt-3 h-[2px] bg-gradient-to-r from-teal-500 to-transparent" />
       </div>
 
-      {/* Port-forward command */}
+      {/* Public URLs */}
       <div className="rounded-xl bg-[#16213E] text-white p-4 mb-6">
         <div className="flex items-center gap-2 mb-3">
-          <Terminal className="w-4 h-4 text-teal-400" />
-          <span className="text-xs font-bold text-teal-400 uppercase tracking-wider">Access locally — run these once</span>
+          <ExternalLink className="w-4 h-4 text-teal-400" />
+          <span className="text-xs font-bold text-teal-400 uppercase tracking-wider">Live Public URLs — login: admin / Tolulope$12</span>
         </div>
-        <pre className="text-xs font-mono text-[#D4E6FF] leading-relaxed overflow-x-auto">{
-`# Grafana dashboards
-kubectl port-forward -n monitoring svc/kube-prometheus-stack-grafana 3000:80
-
-# Prometheus alerts
-kubectl port-forward -n monitoring svc/kube-prometheus-stack-prometheus 9090:9090`
-        }</pre>
+        <div className="flex flex-col gap-2">
+          <a href={GRAFANA_URL} target="_blank" rel="noopener noreferrer"
+            className="text-xs font-mono text-teal-300 hover:text-teal-100 transition-colors">
+            → {GRAFANA_URL}
+          </a>
+          <a href={PROMETHEUS_URL} target="_blank" rel="noopener noreferrer"
+            className="text-xs font-mono text-teal-300 hover:text-teal-100 transition-colors">
+            → {PROMETHEUS_URL}
+          </a>
+        </div>
       </div>
 
       {/* Three metric cards */}
@@ -66,7 +69,7 @@ kubectl port-forward -n monitoring svc/kube-prometheus-stack-prometheus 9090:909
           </div>
           <div className="space-y-2">
             {DASHBOARDS.map(d => (
-              <a key={d.name} href={`http://localhost:3000${d.path}`} target="_blank" rel="noopener noreferrer"
+              <a key={d.name} href={d.path} target="_blank" rel="noopener noreferrer"
                 className="block rounded-lg bg-gray-50 hover:bg-teal-50 px-3 py-2 transition-colors">
                 <p className="text-xs font-semibold text-gray-800">{d.name}</p>
                 <p className="text-[11px] text-gray-500 mt-0.5">{d.desc}</p>
