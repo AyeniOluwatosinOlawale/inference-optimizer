@@ -1,8 +1,6 @@
 import Image from 'next/image';
 import Link from 'next/link';
-import { ExternalLink, Github, Cpu, Zap, Clock, TrendingUp, AlertTriangle, CheckCircle2, XCircle } from 'lucide-react';
-import { DeveloperSection } from './developer-section';
-import { ObservabilitySection } from './observability-section';
+import { ExternalLink, Github, Cpu, Zap, Clock, TrendingUp, AlertTriangle, CheckCircle2, XCircle, Code2, BarChart3 } from 'lucide-react';
 import {
   META, HEADLINE, SLO,
   UC1_PARETO, UC1_VLLM_PARETO, UC1_PREFIX_SPEEDUP,
@@ -141,8 +139,6 @@ function Code({ children }: { children: string }) {
 
 // ─── Sidebar TOC ─────────────────────────────────────────────────────────────
 const TOC = [
-  { id: 'developer',   label: '⚡ Developer Access' },
-  { id: 'observability', label: '📊 Observability' },
   { id: 'setup',       label: 'Setup' },
   { id: 'uc1',         label: 'UC 1: Profiling & Pareto' },
   { id: 'uc2',         label: 'UC 2: Percentile Analysis' },
@@ -246,11 +242,31 @@ export default function LLMBenchmarkPage() {
         {/* Main content */}
         <main className="min-w-0 flex-1 max-w-4xl">
 
-          {/* ── Developer Access ───────────────────────────────────────── */}
-          <DeveloperSection />
-
-          {/* ── Observability ──────────────────────────────────────────── */}
-          <ObservabilitySection />
+          {/* ── Quick links ────────────────────────────────────────────── */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-10">
+            <Link href="/developer"
+              className="flex items-start gap-4 rounded-xl border border-teal-200 bg-teal-50/40 p-5 hover:border-teal-400 hover:bg-teal-50 transition-colors group">
+              <div className="w-10 h-10 rounded-lg bg-teal-600 flex items-center justify-center shrink-0">
+                <Code2 className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <p className="text-sm font-bold text-gray-900 group-hover:text-teal-700">Developer Portal</p>
+                <p className="text-xs text-gray-500 mt-0.5">Endpoint, code examples, generate API key</p>
+              </div>
+              <ExternalLink className="w-4 h-4 text-gray-400 ml-auto mt-0.5 shrink-0" />
+            </Link>
+            <Link href="/observability"
+              className="flex items-start gap-4 rounded-xl border border-blue-200 bg-blue-50/40 p-5 hover:border-blue-400 hover:bg-blue-50 transition-colors group">
+              <div className="w-10 h-10 rounded-lg bg-blue-600 flex items-center justify-center shrink-0">
+                <BarChart3 className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <p className="text-sm font-bold text-gray-900 group-hover:text-blue-700">Observability</p>
+                <p className="text-xs text-gray-500 mt-0.5">Grafana dashboards, Prometheus alerts, autoscaling</p>
+              </div>
+              <ExternalLink className="w-4 h-4 text-gray-400 ml-auto mt-0.5 shrink-0" />
+            </Link>
+          </div>
 
           {/* ── Setup ──────────────────────────────────────────────────── */}
           <SectionAnchor id="setup" title="Setup: Test Endpoint Details" />
