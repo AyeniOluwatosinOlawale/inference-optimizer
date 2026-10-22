@@ -201,6 +201,56 @@ export default function LLMBenchmarkPage() {
         </div>
       </div>
 
+      {/* ── Mobile-only quick links + capabilities ───────────────────────── */}
+      <div className="lg:hidden bg-gray-50 border-b border-gray-200 px-4 py-6 space-y-4">
+        <div className="flex flex-col gap-3">
+          <Link href="/developer"
+            className="flex items-start gap-3 rounded-xl border border-teal-300 bg-white px-4 py-3 shadow-sm">
+            <div className="w-8 h-8 rounded bg-teal-600 flex items-center justify-center shrink-0 mt-0.5">
+              <Code2 className="w-4 h-4 text-white" />
+            </div>
+            <div>
+              <p className="text-sm font-bold text-teal-800">Developer Portal →</p>
+              <p className="text-xs text-teal-600 mt-0.5 leading-snug">
+                Production-grade LLM inference API built on vLLM + LiteLLM, served on GKE with live web search, agentic integrations, and streaming — drop-in OpenAI replacement.
+              </p>
+            </div>
+          </Link>
+          <Link href="/observability"
+            className="flex items-center gap-3 rounded-xl border border-blue-300 bg-white px-4 py-3 shadow-sm">
+            <div className="w-8 h-8 rounded bg-blue-600 flex items-center justify-center shrink-0">
+              <BarChart3 className="w-4 h-4 text-white" />
+            </div>
+            <div>
+              <p className="text-sm font-bold text-blue-800">Observability →</p>
+              <p className="text-xs text-blue-600 mt-0.5">Grafana · Prometheus · KEDA</p>
+            </div>
+          </Link>
+        </div>
+        <div>
+          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Model Capabilities</p>
+          <div className="grid grid-cols-2 gap-x-4 gap-y-1">
+            {[
+              'Chat — Q&A, writing, code help',
+              'Live web search & news',
+              'Weather & crypto prices',
+              'GitHub — repos, issues, PRs',
+              'Stripe — payments, refunds',
+              'Supabase — query & insert',
+              'Slack — send & read',
+              'Notion, Linear, Resend, Twilio',
+              'Multi-step goal execution',
+              'Python code execution',
+              'Streaming (SSE)',
+            ].map(cap => (
+              <p key={cap} className="flex items-start gap-1 text-[11px] text-gray-500">
+                <span className="text-teal-500 shrink-0 mt-px">→</span>{cap}
+              </p>
+            ))}
+          </div>
+        </div>
+      </div>
+
       {/* SLO banner */}
       <div className="bg-slate-800 text-white text-xs py-2">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-wrap gap-4 items-center">
