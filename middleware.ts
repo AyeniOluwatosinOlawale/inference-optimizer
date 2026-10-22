@@ -12,10 +12,8 @@ export async function middleware(request: NextRequest) {
   // Observability page: require HTTP-only cookie set by /api/observability/verify
   if (pathname.startsWith('/observability') && !pathname.startsWith('/api/')) {
     const obsAccess = request.cookies.get('obs_access_v2');
-    if (!obsAccess) {
-      const url = request.nextUrl.clone();
-      url.pathname = '/observability/locked';
-      return NextResponse.rewrite(url);
+    if (!obsAccess && !pathname.startsWith('/observability/locked')) {
+      return NextResponse.redirect(new URL('/observability/locked', request.url));
     }
   }
 
