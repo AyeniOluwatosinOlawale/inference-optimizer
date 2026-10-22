@@ -321,6 +321,16 @@ export default function LLMBenchmarkPage() {
                   <p className="text-[10px] text-blue-600 leading-tight">Grafana · Prometheus · KEDA</p>
                 </div>
               </Link>
+              <a href="https://api.136.65.123.94.nip.io/ui" target="_blank" rel="noopener noreferrer"
+                className="flex items-center gap-2 rounded-lg border border-green-300 bg-green-50 px-3 py-2.5 hover:bg-green-100 transition-colors group">
+                <div className="w-6 h-6 rounded bg-green-600 flex items-center justify-center shrink-0">
+                  <DollarSign className="w-3.5 h-3.5 text-white" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-xs font-bold text-green-800 group-hover:text-green-900">LiteLLM Dashboard →</p>
+                  <p className="text-[10px] text-green-600 leading-tight">Spend · Keys · Usage logs</p>
+                </div>
+              </a>
             </div>
 
             {/* ── What the model can do ── */}
