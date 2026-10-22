@@ -266,6 +266,7 @@ export default function LLMBenchmarkPage() {
               <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Model Capabilities</p>
               <ul className="flex flex-col gap-1.5">
                 {[
+                  'Chat — Q&A, writing, code help',
                   'Live web search & news',
                   'Weather & crypto prices',
                   'GitHub — repos, issues, PRs',
