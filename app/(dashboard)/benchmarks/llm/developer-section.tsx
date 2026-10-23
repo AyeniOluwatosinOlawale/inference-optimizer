@@ -59,7 +59,7 @@ for await (const chunk of stream) {
 const GOAL_SNIPPETS = {
   python: `import httpx, json
 
-# Give it a goal — it plans, executes each step, and
+# Give it a goal - it plans, executes each step, and
 # streams progress in real-time until the task is done.
 with httpx.stream(
     "POST",
@@ -134,7 +134,7 @@ const INTEGRATION_SNIPPETS = {
 
 client = OpenAI(base_url="${ENDPOINT}", api_key="YOUR_API_KEY")
 
-# Pass credentials once in the request — the agent unlocks
+# Pass credentials once in the request - the agent unlocks
 # the matching tools automatically for this session only.
 # Alternatively, just paste the token in your chat message.
 response = client.chat.completions.create(
@@ -171,7 +171,7 @@ const client = new OpenAI({ baseURL: '${ENDPOINT}', apiKey: 'YOUR_API_KEY' });
 const stream = await client.chat.completions.create({
   model: 'AnaModel',
   messages: [{ role: 'user', content: 'Show my Stripe balance and last 5 payments' }],
-  // @ts-ignore — extra_body passes through to the server
+  // @ts-ignore - extra_body passes through to the server
   integrations: {
     stripe:   { api_key: 'sk_live_YOUR_KEY' },
     github:   { token: 'ghp_YOUR_TOKEN' },
@@ -190,7 +190,7 @@ for await (const chunk of stream) {
   process.stdout.write(chunk.choices[0]?.delta?.content ?? '');
 }`,
 
-  curl: `# Option A — pass in request body
+  curl: `# Option A - pass in request body
 curl -X POST ${ENDPOINT}/chat/completions \\
   -H "Authorization: Bearer YOUR_API_KEY" \\
   -H "Content-Type: application/json" \\
@@ -209,7 +209,7 @@ curl -X POST ${ENDPOINT}/chat/completions \\
     ]
   }'
 
-# Option B — just paste the token in your message (no extra config needed)
+# Option B - just paste the token in your message (no extra config needed)
 curl -X POST ${ENDPOINT}/chat/completions \\
   -H "Authorization: Bearer YOUR_API_KEY" \\
   -H "Content-Type: application/json" \\
@@ -217,7 +217,7 @@ curl -X POST ${ENDPOINT}/chat/completions \\
     "model": "AnaModel",
     "stream": true,
     "messages": [
-      {"role": "user", "content": "My Stripe key is sk_live_xxx — show my balance"}
+      {"role": "user", "content": "My Stripe key is sk_live_xxx - show my balance"}
     ]
   }'`,
 };
@@ -318,7 +318,7 @@ export function DeveloperSection() {
       <div className="mb-8">
         <h2 className="text-xl font-bold text-gray-900 mb-1">Developer Access</h2>
         <p className="text-sm text-gray-500">
-          OpenAI-compatible API — three modes, one endpoint. Swap your base URL and every existing integration just works.
+          OpenAI-compatible API - three modes, one endpoint. Swap your base URL and every existing integration just works.
         </p>
         <div className="mt-3 h-[2px] bg-gradient-to-r from-teal-500 to-transparent" />
       </div>
@@ -339,8 +339,8 @@ export function DeveloperSection() {
         <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">All Endpoints</p>
         <div className="space-y-2">
           {[
-            { method: 'POST', path: '/v1/chat/completions', desc: 'Chat, streaming, agentic tool chains — drop-in OpenAI replacement' },
-            { method: 'POST', path: '/v1/agent/goal',       desc: 'Autonomous goal execution — plan + execute + stream progress' },
+            { method: 'POST', path: '/v1/chat/completions', desc: 'Chat, streaming, agentic tool chains - drop-in OpenAI replacement' },
+            { method: 'POST', path: '/v1/agent/goal',       desc: 'Autonomous goal execution - plan + execute + stream progress' },
             { method: 'GET',  path: '/v1/models',           desc: 'List available models (AnaModel, llama3, qwen3, …)' },
           ].map(e => (
             <div key={e.path} className="flex items-start gap-3 rounded-lg bg-gray-50 px-3 py-2">
@@ -354,18 +354,18 @@ export function DeveloperSection() {
         </div>
       </div>
 
-      {/* Section 1 — Chat */}
+      {/* Section 1 - Chat */}
       <div className="mb-8">
         <SectionHeader
           icon={<Code2 className="w-4 h-4" />}
           title="Chat & Agentic Tools"
           badge="Mode 1 + 2"
-          desc="Standard chat with automatic tool use. The agent decides when to search the web, run code, or check the weather — you just ask."
+          desc="Standard chat with automatic tool use. The agent decides when to search the web, run code, or check the weather - you just ask."
         />
         <CodeBlock snippets={CHAT_SNIPPETS} />
       </div>
 
-      {/* Section 2 — Goal execution */}
+      {/* Section 2 - Goal execution */}
       <div className="mb-8">
         <SectionHeader
           icon={<Zap className="w-4 h-4" />}
@@ -386,12 +386,12 @@ export function DeveloperSection() {
         <CodeBlock snippets={GOAL_SNIPPETS} />
       </div>
 
-      {/* Section 3 — Integrations */}
+      {/* Section 3 - Integrations */}
       <div className="mb-8">
         <SectionHeader
           icon={<Link2 className="w-4 h-4" />}
           title="Integrations"
-          desc="Connect external services by passing credentials in the request body — or just paste the token directly in your chat message. The agent detects it automatically."
+          desc="Connect external services by passing credentials in the request body - or just paste the token directly in your chat message. The agent detects it automatically."
         />
 
         {/* Integration chips */}

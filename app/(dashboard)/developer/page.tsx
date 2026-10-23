@@ -3,7 +3,7 @@ import { Code2, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 
 export const metadata = {
-  title: 'Developer Portal — AnaModel API',
+  title: 'Developer Portal - AnaModel API',
 };
 
 export default function DeveloperPage() {
@@ -22,7 +22,7 @@ export default function DeveloperPage() {
           </h1>
           <p className="text-base text-slate-300 max-w-2xl">
             Drop-in replacement for the OpenAI SDK. Live web search, agentic tools, and streaming
-            built in — no extra configuration.
+            built in - no extra configuration.
           </p>
         </div>
       </div>
@@ -42,10 +42,10 @@ export default function DeveloperPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {[
               ['Chat',              'Q&A, writing, code help, explanations'],
-              ['Live web search',   'Auto-triggers — no cutoff date limitation'],
-              ['Agentic actions',   'GitHub, Stripe, Supabase, Slack + more — just paste token in chat'],
+              ['Live web search',   'Auto-triggers - no cutoff date limitation'],
+              ['Agentic actions',   'GitHub, Stripe, Supabase, Slack + more - just paste token in chat'],
               ['Goal execution',    'Multi-step tasks executed end-to-end with progress streaming'],
-              ['Weather & crypto',  'Live data via open APIs — no key needed'],
+              ['Weather & crypto',  'Live data via open APIs - no key needed'],
               ['Python execution',  'Run code, analyse data, compute results inline'],
             ].map(([title, desc]) => (
               <div key={title} className="flex gap-3">

@@ -26,7 +26,7 @@ export function ObservabilitySection() {
       <div className="mb-6">
         <h2 className="text-xl font-bold text-gray-900 mb-1">Observability</h2>
         <p className="text-sm text-gray-500">
-          Live metrics, alerting rules, and autoscaling — publicly accessible via Traefik ingress.
+          Live metrics, alerting rules, and autoscaling - publicly accessible via Traefik ingress.
         </p>
         <div className="mt-3 h-[2px] bg-gradient-to-r from-teal-500 to-transparent" />
       </div>

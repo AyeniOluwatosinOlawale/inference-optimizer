@@ -212,7 +212,7 @@ export default function LLMBenchmarkPage() {
             <div>
               <p className="text-sm font-bold text-teal-800">Developer Portal →</p>
               <p className="text-xs text-teal-600 mt-0.5 leading-snug">
-                Production-grade LLM inference API built on vLLM + LiteLLM, served on GKE with live web search, agentic integrations, and streaming — drop-in OpenAI replacement.
+                Production-grade LLM inference API built on vLLM + LiteLLM, served on GKE with live web search, agentic integrations, and streaming - drop-in OpenAI replacement.
               </p>
             </div>
           </Link>
@@ -241,13 +241,13 @@ export default function LLMBenchmarkPage() {
           <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Model Capabilities</p>
           <div className="grid grid-cols-2 gap-x-4 gap-y-1">
             {[
-              'Chat — Q&A, writing, code help',
+              'Chat - Q&A, writing, code help',
               'Live web search & news',
               'Weather & crypto prices',
-              'GitHub — repos, issues, PRs',
-              'Stripe — payments, refunds',
-              'Supabase — query & insert',
-              'Slack — send & read',
+              'GitHub - repos, issues, PRs',
+              'Stripe - payments, refunds',
+              'Supabase - query & insert',
+              'Slack - send & read',
               'Notion, Linear, Resend, Twilio',
               'Multi-step goal execution',
               'Python code execution',
@@ -307,7 +307,7 @@ export default function LLMBenchmarkPage() {
                 <div className="min-w-0">
                   <p className="text-xs font-bold text-teal-800 group-hover:text-teal-900">Developer Portal →</p>
                   <p className="text-[10px] text-teal-600 leading-tight mt-0.5">
-                    Production-grade LLM inference API built on vLLM + LiteLLM, served on GKE with live web search, agentic integrations, and streaming — drop-in OpenAI replacement.
+                    Production-grade LLM inference API built on vLLM + LiteLLM, served on GKE with live web search, agentic integrations, and streaming - drop-in OpenAI replacement.
                   </p>
                 </div>
               </Link>
@@ -338,13 +338,13 @@ export default function LLMBenchmarkPage() {
               <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Model Capabilities</p>
               <ul className="flex flex-col gap-1.5">
                 {[
-                  'Chat — Q&A, writing, code help',
+                  'Chat - Q&A, writing, code help',
                   'Live web search & news',
                   'Weather & crypto prices',
-                  'GitHub — repos, issues, PRs',
-                  'Stripe — payments, refunds',
-                  'Supabase — query & insert',
-                  'Slack — send & read',
+                  'GitHub - repos, issues, PRs',
+                  'Stripe - payments, refunds',
+                  'Supabase - query & insert',
+                  'Slack - send & read',
                   'Notion, Linear, Resend, Twilio',
                   'Multi-step goal execution',
                   'Python code execution',
@@ -594,7 +594,7 @@ python3 scripts/generate_report_metrics.py \\
           <SubHeading>Output Tokens per Request - across all 576 measurement records</SubHeading>
           <p className="text-slate-400 text-sm mb-4">
             All requests used <code className="bg-slate-800 px-1.5 py-0.5 rounded text-teal-400 font-mono text-xs">output_tokens_requested = {OUTPUT_TOKENS_STATS.requested}</code>.
-            Actual output varies because the model generates until EOS — the overshoot validates the
+            Actual output varies because the model generates until EOS - the overshoot validates the
             benchmark is measuring real generation, not truncated responses.
           </p>
           <Table>
@@ -949,15 +949,15 @@ CUDA_VISIBLE_DEVICES=0,1 vllm serve Qwen/Qwen3-8B \\
             <p className="text-teal-400 font-semibold mb-2">Two distinct saturation points</p>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <p className="text-slate-300 font-medium">Throughput saturation — c=32</p>
+                <p className="text-slate-300 font-medium">Throughput saturation - c=32</p>
                 <p className="text-slate-400 text-xs mt-1">TPS plateaus from 1,487 (c=32) to 1,484 (c=128). Adding concurrency beyond c=32 produces no meaningful throughput gain.</p>
               </div>
               <div>
-                <p className="text-slate-300 font-medium">SLO-sustainable capacity — c=128+</p>
+                <p className="text-slate-300 font-medium">SLO-sustainable capacity - c=128+</p>
                 <p className="text-slate-400 text-xs mt-1">All three SLOs (TTFT p99, TPOT p99, E2E p99) remain met at every tested concurrency including c=128. The SLO ceiling has not been reached.</p>
               </div>
             </div>
-            <p className="text-slate-500 text-xs mt-3">Production implication: cap concurrency at c=32 for maximum throughput efficiency. You have headroom to c=128 before any SLO breach — use it for burst absorption, not steady-state.</p>
+            <p className="text-slate-500 text-xs mt-3">Production implication: cap concurrency at c=32 for maximum throughput efficiency. You have headroom to c=128 before any SLO breach - use it for burst absorption, not steady-state.</p>
           </div>
 
           <KeyTakeaways items={[

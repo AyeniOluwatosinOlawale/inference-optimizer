@@ -3,7 +3,7 @@ import { BarChart3, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 
 export const metadata = {
-  title: 'Observability — AnaModel Inference Platform',
+  title: 'Observability - AnaModel Inference Platform',
 };
 
 export default function ObservabilityPage() {
@@ -22,7 +22,7 @@ export default function ObservabilityPage() {
               Metrics, Alerts &amp; Autoscaling
             </h1>
             <p className="text-base text-slate-300 max-w-2xl">
-              Grafana dashboards, Prometheus alert rules, and KEDA autoscaling — all running on GKE.
+              Grafana dashboards, Prometheus alert rules, and KEDA autoscaling - all running on GKE.
               Publicly accessible via Traefik ingress with gateway auth.
             </p>
 
@@ -58,9 +58,9 @@ export default function ObservabilityPage() {
             <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-4">Observability Stack</p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {[
-                ['Prometheus',       'Metrics scraping — vLLM, LiteLLM, DCGM GPU exporter, kube-state-metrics'],
+                ['Prometheus',       'Metrics scraping - vLLM, LiteLLM, DCGM GPU exporter, kube-state-metrics'],
                 ['Grafana',          '3 pre-built dashboards provisioned via ConfigMap sidecar'],
-                ['AlertManager',     '6 alert rules — GPU cache, queue spike, pod crash, disk pressure'],
+                ['AlertManager',     '6 alert rules - GPU cache, queue spike, pod crash, disk pressure'],
                 ['KEDA',             'Event-driven autoscaling on vllm:num_requests_waiting metric'],
                 ['HPA',              'LiteLLM gateway scales on CPU > 70%'],
                 ['Loki + FluentBit', 'Log aggregation from llm-serving and llm-gateway namespaces'],
