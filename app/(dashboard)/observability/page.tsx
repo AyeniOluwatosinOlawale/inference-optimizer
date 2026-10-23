@@ -22,8 +22,8 @@ export default function ObservabilityPage() {
               Metrics, Alerts &amp; Autoscaling
             </h1>
             <p className="text-base text-slate-300 max-w-2xl">
-              Grafana dashboards, Prometheus alert rules, and KEDA autoscaling - all running on GKE.
-              Publicly accessible via Traefik ingress with gateway auth.
+              Grafana, Prometheus alert rules, and KEDA autoscaling on GKE.
+              Accessible via Traefik ingress.
             </p>
 
             {/* Live metric pills */}

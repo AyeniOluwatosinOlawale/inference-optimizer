@@ -318,7 +318,7 @@ export function DeveloperSection() {
       <div className="mb-8">
         <h2 className="text-xl font-bold text-gray-900 mb-1">Developer Access</h2>
         <p className="text-sm text-gray-500">
-          OpenAI-compatible API - three modes, one endpoint. Swap your base URL and every existing integration just works.
+          OpenAI-compatible. Three modes, one endpoint. Swap the base URL and your existing code works.
         </p>
         <div className="mt-3 h-[2px] bg-gradient-to-r from-teal-500 to-transparent" />
       </div>
@@ -339,7 +339,7 @@ export function DeveloperSection() {
         <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">All Endpoints</p>
         <div className="space-y-2">
           {[
-            { method: 'POST', path: '/v1/chat/completions', desc: 'Chat, streaming, agentic tool chains - drop-in OpenAI replacement' },
+            { method: 'POST', path: '/v1/chat/completions', desc: 'Chat and streaming. Replaces the OpenAI endpoint with no code changes.' },
             { method: 'POST', path: '/v1/agent/goal',       desc: 'Autonomous goal execution - plan + execute + stream progress' },
             { method: 'GET',  path: '/v1/models',           desc: 'List available models (AnaModel, llama3, qwen3, …)' },
           ].map(e => (
@@ -360,7 +360,7 @@ export function DeveloperSection() {
           icon={<Code2 className="w-4 h-4" />}
           title="Chat & Agentic Tools"
           badge="Mode 1 + 2"
-          desc="Standard chat with automatic tool use. The agent decides when to search the web, run code, or check the weather - you just ask."
+          desc="Chat with built-in tools. The agent searches the web, runs code, or checks the weather when the question calls for it."
         />
         <CodeBlock snippets={CHAT_SNIPPETS} />
       </div>
@@ -391,7 +391,7 @@ export function DeveloperSection() {
         <SectionHeader
           icon={<Link2 className="w-4 h-4" />}
           title="Integrations"
-          desc="Connect external services by passing credentials in the request body - or just paste the token directly in your chat message. The agent detects it automatically."
+          desc="Pass credentials in the request body or paste the token in your message. The agent picks up the right tools for that session."
         />
 
         {/* Integration chips */}

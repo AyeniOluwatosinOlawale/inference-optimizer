@@ -212,7 +212,7 @@ export default function LLMBenchmarkPage() {
             <div>
               <p className="text-sm font-bold text-teal-800">Developer Portal →</p>
               <p className="text-xs text-teal-600 mt-0.5 leading-snug">
-                Production-grade LLM inference API built on vLLM + LiteLLM, served on GKE with live web search, agentic integrations, and streaming - drop-in OpenAI replacement.
+                vLLM + LiteLLM inference API on GKE. Swap the base URL and your OpenAI integrations work unchanged. Adds live web search, tool use, and streaming.
               </p>
             </div>
           </Link>
@@ -307,7 +307,7 @@ export default function LLMBenchmarkPage() {
                 <div className="min-w-0">
                   <p className="text-xs font-bold text-teal-800 group-hover:text-teal-900">Developer Portal →</p>
                   <p className="text-[10px] text-teal-600 leading-tight mt-0.5">
-                    Production-grade LLM inference API built on vLLM + LiteLLM, served on GKE with live web search, agentic integrations, and streaming - drop-in OpenAI replacement.
+                    vLLM + LiteLLM inference API on GKE. Swap the base URL and your OpenAI integrations work unchanged. Adds live web search, tool use, and streaming.
                   </p>
                 </div>
               </Link>

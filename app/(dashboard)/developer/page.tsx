@@ -21,8 +21,7 @@ export default function DeveloperPage() {
             Integrate AnaModel into your app
           </h1>
           <p className="text-base text-slate-300 max-w-2xl">
-            Drop-in replacement for the OpenAI SDK. Live web search, agentic tools, and streaming
-            built in - no extra configuration.
+            Replaces the OpenAI SDK. Change the base URL, keep your existing code. Live web search, tool use, and streaming included.
           </p>
         </div>
       </div>
@@ -42,10 +41,10 @@ export default function DeveloperPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {[
               ['Chat',              'Q&A, writing, code help, explanations'],
-              ['Live web search',   'Auto-triggers - no cutoff date limitation'],
-              ['Agentic actions',   'GitHub, Stripe, Supabase, Slack + more - just paste token in chat'],
-              ['Goal execution',    'Multi-step tasks executed end-to-end with progress streaming'],
-              ['Weather & crypto',  'Live data via open APIs - no key needed'],
+              ['Live web search',   'Runs when the question needs current data. No cutoff date.'],
+              ['Agentic actions',   'GitHub, Stripe, Supabase, Slack and more. Paste the token in chat.'],
+              ['Goal execution',    'Give it a goal. It plans the steps, runs them, and streams progress.'],
+              ['Weather & crypto',  'Live data via open APIs. No key needed.'],
               ['Python execution',  'Run code, analyse data, compute results inline'],
             ].map(([title, desc]) => (
               <div key={title} className="flex gap-3">
